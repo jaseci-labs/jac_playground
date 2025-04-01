@@ -82,7 +82,7 @@ export function ResizablePanel({
         className={cn(
           "absolute resizer",
           resizerClassName,
-          isHorizontal ? "bottom-0 left-0" : "right-0 top-0"
+          isHorizontal ? "top-0 left-0" : "right-0 top-0"
         )}
         onMouseDown={handleMouseDown}
       />

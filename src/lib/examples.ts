@@ -2,115 +2,118 @@
 export const exampleCodes = [
   {
     name: "Hello World",
-    code: `
-# A simple Hello World program in Jaclang
-print("Hello, World!");
-`,
+    code:
+`# A simple Hello World program in Jaclang
+with entry {
+    print("Hello, World!");
+}`,
   },
   {
     name: "Variables",
-    code: `
-# Variables in Jaclang
-name = "Jac";
-age = 1;
-is_programming_language = true;
-
-print("Name:", name);
-print("Age:", age);
-print("Is a programming language?", is_programming_language);
-`,
+    code:
+`# Variables in Jaclang
+with entry {
+    x:int = 5;
+    y:str = "Tom";
+    print(x);
+    print(y);
+}`,
   },
   {
     name: "Conditional Statements",
-    code: `
-# Conditional statements in Jaclang
-temperature = 25;
-
-if temperature > 30:
-    print("It's hot outside!");
-elif temperature > 20:
-    print("It's a nice day!");
-else:
-    print("It's cold outside!");
+    code:
+`# Conditional statements in Jaclang
+with entry {
+    a = 5;
+    b = 20;
+    if b > a {
+        print("b is greater than a");
+    } elif a == b {
+        print("a and b are equal");
+    }
+}
 `,
   },
   {
     name: "Loops",
-    code: `
-# Loops in Jaclang
-print("For loop example:");
-for i in range(5):
-    print("Count:", i);
-
-print("\\nWhile loop example:");
-count = 0;
-while count < 3:
-    print("Count:", count);
-    count = count + 1;
+    code:
+`# Loops in Jaclang
+with entry {
+    size = ["small", "medium", "large"];
+    colour = ["red", "green", "blue"];
+    items = ["shirt", "pants", "jacket"];
+    for x in size {
+        for y in colour {
+            for z in items {
+                print(x, y, z);
+            }
+        }
+    }
+}
 `,
   },
   {
-    name: "Functions",
-    code: `
-# Functions in Jaclang
-function add(a, b) {
+    name: "Abilities",
+    code:
+`# Abilities in Jaclang
+can add(a: int, b: int) -> int {
     return a + b;
 }
-
-function greet(name) {
-    return "Hello, " + name + "!";
+with entry {
+    print(add(2, 3));
 }
-
-sum = add(5, 3);
-greeting = greet("Jaclang");
-
-print("Sum:", sum);
-print(greeting);
 `,
   },
   {
-    name: "Arrays",
-    code: `
-# Arrays in Jaclang
-numbers = [1, 2, 3, 4, 5];
-fruits = ["apple", "banana", "orange"];
-
-print("Numbers:", numbers);
-print("First number:", numbers[0]);
-print("Fruits:", fruits);
-print("Last fruit:", fruits[2]);
-
-# Adding elements
-numbers.append(6);
-fruits.append("grape");
-
-print("Updated numbers:", numbers);
-print("Updated fruits:", fruits);
+    name: "Lists",
+    code:
+`# Lists in Jaclang
+with entry {
+    fruits = ["apple", "banana", "cherry", "orange", "kiwi", "melon", "mango"];
+    print(fruits[:4]);
+}
 `,
   },
   {
-    name: "Object-oriented",
-    code: `
-# Object-oriented programming in Jaclang
-class Person {
-    constructor(name, age) {
-        this.name = name;
-        this.age = age;
-    }
+    name: "Data Spatial Programming",
+    code:
+`# Data Spatial programming in Jaclang
+walker Creator {
+    can create with \`root entry;
+}
 
-    introduce() {
-        return "Hi, I'm " + this.name + " and I'm " + this.age + " years old.";
-    }
+node node_a {
+    has val: int;
 
-    birthday() {
-        this.age += 1;
-        return "Happy Birthday! Now I'm " + this.age + " years old.";
+    can make_something with Creator entry;
+}
+
+edge connector {
+    has value: int = 10;
+}
+
+:walker:Creator:can:create {
+    end = here;
+    for i=0 to i<3 by i+=1  {
+        end ++> (end := node_a(val=i));
+    }
+    end +:connector:value=i:+> (end := node_a(val=i + 10));
+    root <+:connector:value=i:+ (end := node_a(val=i + 10));
+    visit [-->];
+}
+
+:node:node_a:can:make_something {
+    i = 0;
+    while i < 5 {
+        print(f"welcome to {self}");
+        i+=1;
     }
 }
 
-alice = new Person("Alice", 25);
-print(alice.introduce());
-print(alice.birthday());
+with entry {
+    root spawn Creator();
+}
+
 `,
   },
 ];
