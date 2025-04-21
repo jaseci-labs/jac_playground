@@ -1,6 +1,7 @@
+declare var loadPyodide: any;
 
-import { useState, useEffect, useCallback } from "react";
-import { Play, RefreshCw, FileCode, Menu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Play, RefreshCw, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CodeEditor } from "@/components/CodeEditor";
 import { OutputPanel } from "@/components/OutputPanel";
@@ -19,7 +20,6 @@ const Index = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [pyodide, setPyodide] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [loaded, setloaded] = useState(false);
   const isMobile = useMobileDetect();
   const { toast } = useToast();
@@ -27,7 +27,6 @@ const Index = () => {
 
   useEffect(() => {
     const loadPyodideAndJacLang = async () => {
-      setLoading(true);
       try {
         const pyodideInstance = await loadPyodide({
           indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/",
@@ -68,27 +67,26 @@ print("JacLang is available!")
       } catch (error) {
         console.error('Error loading Pyodide or JacLang:', error);
       } finally {
-        setLoading(false);
       }
     };
 
     if (!pyodide) {
       loadPyodideAndJacLang();
     }
-  }, []);
+  }, [pyodide]);
 
 
   useEffect(() => {
     if (loaded) {
       setTimeout(() => {
         setloaded(false);
-        setLoading(false);
       }, 1500);
     }
   }, [loaded])
 
   const runJacCode = async () => {
     if (!pyodide) return;
+    setIsRunning(true);
     setOutput('');
     const safeCode = JSON.stringify(code);
 
@@ -128,6 +126,7 @@ os.close(saved_stderr)
       const outputText = new TextDecoder().decode(outputBuffer);
 
       setOutput(outputText || "No output");
+      setIsRunning(false);
     } catch (error) {
       setOutput(`Error: ${error}`);
     }
