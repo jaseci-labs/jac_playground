@@ -56,8 +56,8 @@ print("JacLang files loaded!")
         // Check if JacLang is installed
         try {
           await pyodideInstance.runPythonAsync(`
-              from jaclang.cli.cli import run
-              print("JacLang is available!")
+from jaclang.cli.cli import run
+print("JacLang is available!")
           `);
         } catch (validationError) {
           console.error("JacLang is not available:", validationError);
@@ -87,36 +87,47 @@ print("JacLang files loaded!")
     }
   }, [loaded])
 
-
-
-  // Function to handle running JacLang code
   const runJacCode = async () => {
     if (!pyodide) return;
     setOutput('');
     const safeCode = JSON.stringify(code);
-    try {
-      const result = await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
 
-# Capture both stdout and stderr
-captured_output = StringIO()
-sys.stdout = captured_output
-sys.stderr = captured_output
+    try {
+      await pyodide.runPythonAsync(`
+import os
+import sys
 
 jac_code = ${safeCode}
-
-# Create a temporary file using the input code and run it directly
 with open("/tmp/temp.jac", "w") as f:
     f.write(jac_code)
-run("/tmp/temp.jac")
 
-# Get the captured output
-sys.stdout = sys.__stdout__
-sys.stderr = sys.__stderr__
-captured_output.getvalue()
-`);
-      setOutput(result || "No output");
+# Backup actual file descriptors
+stdout_fd = sys.stdout.fileno()
+stderr_fd = sys.stderr.fileno()
+saved_stdout = os.dup(stdout_fd)
+saved_stderr = os.dup(stderr_fd)
+
+with open("/tmp/jac_output.log", "w") as log_file:
+    os.dup2(log_file.fileno(), stdout_fd)
+    os.dup2(log_file.fileno(), stderr_fd)
+
+    try:
+        run("/tmp/temp.jac")
+    except Exception:
+        import traceback
+        traceback.print_exc(file=log_file)
+
+os.dup2(saved_stdout, stdout_fd)
+os.dup2(saved_stderr, stderr_fd)
+os.close(saved_stdout)
+os.close(saved_stderr)
+      `);
+
+      // Now read the output log using Pyodide FS API
+      const outputBuffer = pyodide.FS.readFile("/tmp/jac_output.log");
+      const outputText = new TextDecoder().decode(outputBuffer);
+
+      setOutput(outputText || "No output");
     } catch (error) {
       setOutput(`Error: ${error}`);
     }
