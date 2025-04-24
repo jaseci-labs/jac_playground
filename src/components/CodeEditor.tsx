@@ -1,8 +1,7 @@
-
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { cn } from "@/lib/utils";
-import "./styles.css";
+import "./CodeEditor.css";
 
 interface CodeEditorProps {
   value: string;
@@ -19,7 +18,9 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const breakpointsRef = useRef<Set<number>>(new Set());
-
+  const decorationIdsRef = useRef<string[]>([]);
+  const decorationsCollectionRef = useRef<any>(null);
+  
   const handleEditorDidMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     editor.focus();
@@ -28,16 +29,15 @@ export function CodeEditor({
       if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
         const line = e.target.position?.lineNumber;
         if (!line) return;
-  
+
         const breakpoints = breakpointsRef.current;
         if (breakpoints.has(line)) {
           breakpoints.delete(line);
         } else {
           breakpoints.add(line);
         }
-  
-        // Update decorations
-        const decorations = Array.from(breakpoints).map((lineNum) => ({
+
+        const newDecorations = Array.from(breakpoints).map((lineNum) => ({
           range: new monaco.Range(lineNum, 1, lineNum, 1),
           options: {
             isWholeLine: false,
@@ -45,11 +45,14 @@ export function CodeEditor({
             glyphMarginHoverMessage: { value: "Breakpoint" },
           },
         }));
-  
-        editor.deltaDecorations([], decorations);
+
+        if (decorationsCollectionRef.current) {
+          decorationsCollectionRef.current.set(newDecorations);
+        } else {
+          decorationsCollectionRef.current = editor.createDecorationsCollection(newDecorations);
+        }
       }
-    }
-    );
+    });
   }, []);
 
   return (
