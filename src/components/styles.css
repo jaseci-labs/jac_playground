@@ -1,0 +1,15 @@
+.myBreakPoint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin-left: 15px;
+}
+
+.myBreakPoint::before {
+    content: '';
+    background-color: red;
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+}
