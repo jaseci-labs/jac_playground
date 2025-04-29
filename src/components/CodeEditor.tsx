@@ -2,6 +2,7 @@
 import { useRef, useCallback } from "react";
 import Editor, { OnMount } from "@monaco-editor/react";
 import { cn } from "@/lib/utils";
+import { setupJacHighlighter } from "@/lib/setupJacLanguage";
 
 interface CodeEditorProps {
   value: string;
@@ -13,22 +14,27 @@ interface CodeEditorProps {
 export function CodeEditor({
   value,
   onChange,
-  language = "javascript",
+  language = "jac",
   className,
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
 
-  const handleEditorDidMount: OnMount = useCallback((editor) => {
+  const handleEditorDidMount: OnMount = useCallback(async (editor, monaco) => {
     editorRef.current = editor;
+
+    if (language === "jac") {
+      await setupJacHighlighter(editor);
+    }
+
     editor.focus();
-  }, []);
+  }, [language]);
 
   return (
     <div className={cn("h-full w-full overflow-hidden", className)}>
       <Editor
         height="100%"
         width="100%"
-        language={language}
+        defaultLanguage="jac"
         value={value}
         theme="vs-dark"
         onChange={(value) => onChange(value || "")}
