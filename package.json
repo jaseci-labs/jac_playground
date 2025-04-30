@@ -51,6 +51,7 @@
     "lucide-react": "^0.462.0",
     "monaco-editor": "^0.52.2",
     "monaco-editor-textmate": "^4.0.0",
+    "monaco-editor-wrapper": "^6.6.0",
     "monaco-textmate": "^3.0.1",
     "next-themes": "^0.3.0",
     "onigasm": "^2.2.5",
