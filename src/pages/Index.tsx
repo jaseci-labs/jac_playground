@@ -212,7 +212,7 @@ os.close(saved_stderr)
                 <CodeEditor
                   value={code}
                   onChange={setCode}
-                  language="python" // Using Python as closest syntax to Jaclang
+                  language="jac"
                   className="h-full"
                 />
               </div>
