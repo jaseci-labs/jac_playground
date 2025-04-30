@@ -1,6 +1,6 @@
 declare var loadPyodide: any;
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Play, RefreshCw, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CodeEditor } from "@/components/CodeEditor";
@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { defaultCode } from "@/lib/examples";
 import { useMobileDetect } from "@/hooks/useMobileDetect";
+import { DebugPanel, DebugState } from "@/components/DebugPanel";
+import { DebugControls, DebugAction } from "@/components/DebugControls";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
 
@@ -21,6 +23,9 @@ const Index = () => {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [pyodide, setPyodide] = useState(null);
   const [loaded, setloaded] = useState(false);
+  const [isDebugging, setIsDebugging] = useState(false);
+  const [debugState, setDebugState] = useState<DebugState | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const isMobile = useMobileDetect();
   const { toast } = useToast();
 
@@ -156,10 +161,17 @@ os.close(saved_stderr)
     setShowMobileSidebar(!showMobileSidebar);
   };
 
+  const handleDebugAction = useCallback(async (action: DebugAction) => {
+    if (action === "toggle") {
+      // Toggle debug mode
+      const newIsDebugging = !isDebugging;
+      setIsDebugging(newIsDebugging);
+    }
+  }, [isDebugging, code, toast]);
+
   return (
     <ThemeProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
-        {/* Header */}
         <header className="h-14 border-b bg-card flex items-center justify-between px-4">
           <div className="flex items-center space-x-2">
             <img src={jacLogo} className="w-8 h-8 mr-2" />
@@ -181,9 +193,7 @@ os.close(saved_stderr)
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Main content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Editor Toolbar */}
             <div className="h-12 border-b bg-card flex items-center justify-between px-4">
               <div className="flex items-center space-x-2">
                 <Button
@@ -192,7 +202,7 @@ os.close(saved_stderr)
                   className="space-x-1 bg-primary hover:bg-primary/90"
                 >
                   <Play className="h-4 w-4" />
-                  <span>Run</span>
+                  <span>{isDebugging ? "Debug" : "Run"}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -205,19 +215,45 @@ os.close(saved_stderr)
               </div>
             </div>
 
-            {/* Editor and output panels */}
+            <DebugControls 
+              isDebugging={isDebugging}
+              isPaused={isPaused}
+              onDebugAction={handleDebugAction}
+            />
+
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Editor Section */}
               <div className="flex-1 overflow-hidden">
-                <CodeEditor
-                  value={code}
-                  onChange={setCode}
-                  language="python" // Using Python as closest syntax to Jaclang
-                  className="h-full"
-                />
+                {isDebugging ? (
+                  <div className="flex h-full">
+                    <div className="flex-1 border-r border-border">
+                      <CodeEditor
+                        value={code}
+                        onChange={setCode}
+                        language="python" // Using Python as closest syntax to Jaclang
+                        // breakpoints={breakpoints}
+                        // onToggleBreakpoint={handleToggleBreakpoint}
+                        className="h-full"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <DebugPanel 
+                        debugState={debugState} 
+                        className="h-full"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <CodeEditor
+                    value={code}
+                    onChange={setCode}
+                    language="python" // Using Python as closest syntax to Jaclang
+                    // breakpoints={breakpoints}
+                    // onToggleBreakpoint={handleToggleBreakpoint}
+                    className="h-full"
+                  />
+                )}
               </div>
 
-              {/* Output Panel */}
               <ResizablePanel
                 direction="horizontal"
                 defaultSize={30}
@@ -228,13 +264,13 @@ os.close(saved_stderr)
                 <OutputPanel
                   output={output}
                   isLoading={isRunning}
+                  // isDebugging={isDebugging}
                   className="h-full"
                 />
               </ResizablePanel>
             </div>
           </div>
 
-          {/* Sidebar - hidden on mobile until toggled */}
           {(showMobileSidebar || !isMobile) && (
             <ExamplesSidebar
               onSelectExample={handleSelectExample}

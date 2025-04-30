@@ -8,6 +8,7 @@ interface CodeEditorProps {
   onChange: (value: string) => void;
   language?: string;
   className?: string;
+  onToggleBreakpoint?: (line: number) => void;
 }
 
 export function CodeEditor({
@@ -15,6 +16,7 @@ export function CodeEditor({
   onChange,
   language = "javascript",
   className,
+  onToggleBreakpoint,
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const breakpointsRef = useRef<Set<number>>(new Set());
