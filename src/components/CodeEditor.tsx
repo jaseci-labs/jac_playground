@@ -92,7 +92,7 @@ export function CodeEditor({
         language="jac"
         value={value}
         theme="vs-dark"
-        onChange={(val) => onChange(val || "")}
+        onChange={(value) => onChange(value || "")}
         onMount={handleEditorDidMount}
         options={{
           fontSize: 14,
