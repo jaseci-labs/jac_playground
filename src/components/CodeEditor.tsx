@@ -58,6 +58,22 @@ export function CodeEditor({
 
       monaco.languages.setLanguageConfiguration("jac", grammerConfig);
 
+      monaco.editor.defineTheme("jac-theme", {
+        base: "vs-dark",
+        inherit: true,
+        rules: [
+          { token: "storage.type.class.jac", foreground: "569CD6" },
+          { token: "storage.type.function.jac", foreground: "569CD6" },
+          { token: "keyword.control.flow.jac", foreground: "C678DD" },
+          { token: "entity.name.type.class.jac", foreground: "3ac9b0" },
+        ],
+        colors: {
+          "editor.foreground": "#FFFFFF",
+        }
+      });
+  
+      monaco.editor.setTheme("jac-theme");
+      
       console.log("Jac language successfully registered");
       textMateLoaded.current = true;
     } catch (error) {
