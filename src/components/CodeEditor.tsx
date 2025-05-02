@@ -84,7 +84,6 @@ export function CodeEditor({
     monacoRef.current = monaco;
     await registerJacLanguage(monaco, editor);
     editor.focus();
-    editor.focus();
 
     editor.onMouseDown((e) => {
       if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
@@ -106,6 +105,8 @@ export function CodeEditor({
             glyphMarginHoverMessage: { value: "Breakpoint" },
           },
         }));
+
+        console.log(newDecorations);
 
         if (decorationsCollectionRef.current) {
           decorationsCollectionRef.current.set(newDecorations);
