@@ -229,7 +229,7 @@ os.close(saved_stderr)
                       <CodeEditor
                         value={code}
                         onChange={setCode}
-                        language="python" // Using Python as closest syntax to Jaclang
+                        language="jac" // Using Python as closest syntax to Jaclang
                         // breakpoints={breakpoints}
                         // onToggleBreakpoint={handleToggleBreakpoint}
                         className="h-full"
@@ -246,7 +246,7 @@ os.close(saved_stderr)
                   <CodeEditor
                     value={code}
                     onChange={setCode}
-                    language="python" // Using Python as closest syntax to Jaclang
+                    language="jac" // Using Python as closest syntax to Jaclang
                     // breakpoints={breakpoints}
                     // onToggleBreakpoint={handleToggleBreakpoint}
                     className="h-full"
