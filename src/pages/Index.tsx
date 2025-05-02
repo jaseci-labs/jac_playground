@@ -38,7 +38,7 @@ const Index = () => {
           cache: true,
         });
 
-        const response = await fetch("jaclang.zip");
+        const response = await fetch("/jaclang.zip");
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
 
