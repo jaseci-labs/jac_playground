@@ -48,7 +48,9 @@ export function DebugControls({
               className="gap-1"
             >
               <ToggleRight className="h-4 w-4" />
-              <span className="hidden sm:inline">Debug</span>
+              <span className="hidden sm:inline">
+                {!isDebugging ? "Debug Mode" : "Run Mode"}
+              </span>
             </Toggle>
           </TooltipTrigger>
           <TooltipContent>
