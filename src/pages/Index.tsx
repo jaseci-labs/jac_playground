@@ -15,6 +15,7 @@ import { DebugPanel, DebugState } from "@/components/DebugPanel";
 import { DebugControls, DebugAction } from "@/components/DebugControls";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
+import { set } from "date-fns";
 
 const Index = () => {
   const [code, setCode] = useState(defaultCode);
@@ -28,7 +29,6 @@ const Index = () => {
   const [isPaused, setIsPaused] = useState(false);
   const isMobile = useMobileDetect();
   const { toast } = useToast();
-
 
   useEffect(() => {
     const loadPyodideAndJacLang = async () => {
@@ -163,10 +163,9 @@ os.close(saved_stderr)
 
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     if (action === "toggle") {
-      const newIsDebugging = !isDebugging;
-      setIsDebugging(newIsDebugging);
+      setIsDebugging(prev => !prev);
     }
-  }, [isDebugging, code, toast]);
+  }, []);
 
   return (
     <ThemeProvider>
@@ -214,7 +213,7 @@ os.close(saved_stderr)
               </div>
             </div>
 
-            <DebugControls 
+            <DebugControls
               isDebugging={isDebugging}
               isPaused={isPaused}
               onDebugAction={handleDebugAction}
@@ -222,35 +221,28 @@ os.close(saved_stderr)
 
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-hidden">
-                {isDebugging ? (
-                  <div className="flex h-full">
-                    <div className="flex-1 border-r border-border">
-                      <CodeEditor
-                        value={code}
-                        onChange={setCode}
-                        language="jac" // Using Python as closest syntax to Jaclang
-                        // breakpoints={breakpoints}
-                        // onToggleBreakpoint={handleToggleBreakpoint}
-                        className="h-full"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <DebugPanel 
-                        debugState={debugState} 
-                        className="h-full"
-                      />
-                    </div>
+                <div className="flex h-full">
+                  <div className={`${isDebugging ? 'w-1/2' : 'w-full'} border-r border-border`}>
+                    <CodeEditor
+                      value={code}
+                      onChange={setCode}
+                      language="jac"
+                      // breakpoints={breakpoints}
+                      // onToggleBreakpoint={handleToggleBreakpoint}
+                      className="h-full"
+                    />
                   </div>
-                ) : (
-                  <CodeEditor
-                    value={code}
-                    onChange={setCode}
-                    language="jac" // Using Python as closest syntax to Jaclang
-                    // breakpoints={breakpoints}
-                    // onToggleBreakpoint={handleToggleBreakpoint}
-                    className="h-full"
-                  />
-                )}
+                  {
+                    isDebugging && (
+                      <div className="flex-1">
+                        <DebugPanel
+                          debugState={debugState}
+                          className="h-full"
+                        />
+                      </div>
+                    )
+                  }
+                </div>
               </div>
 
               <ResizablePanel

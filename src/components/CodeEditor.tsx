@@ -29,7 +29,7 @@ export function CodeEditor({
       const { loadWASM } = await import("onigasm");
       const { Registry } = await import("monaco-textmate");
       const { wireTmGrammars } = await import("monaco-editor-textmate");
-
+      
       monaco.languages.register({ id: "jac" });
 
       try {
