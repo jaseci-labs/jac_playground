@@ -163,7 +163,6 @@ os.close(saved_stderr)
 
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     if (action === "toggle") {
-      // Toggle debug mode
       const newIsDebugging = !isDebugging;
       setIsDebugging(newIsDebugging);
     }

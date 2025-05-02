@@ -15,7 +15,6 @@ export function CodeEditor({
   value,
   onChange,
   className,
-  onToggleBreakpoint,
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null);
   const breakpointsRef = useRef<Set<number>>(new Set());
@@ -50,19 +49,15 @@ export function CodeEditor({
           content: jacGrammar,
         }),
       });
-
       const grammars = new Map();
       grammars.set("jac", "source.jac");
 
-      // Create a model with the proper URI to apply grammar
       const uri = monaco.Uri.parse("inmemory://model.jac");
       const model = monaco.editor.createModel(value, "jac", uri);
       editor.setModel(model);
-
       await wireTmGrammars(monaco, registry, grammars, editor);
 
       monaco.languages.setLanguageConfiguration("jac", grammerConfig);
-
       monaco.editor.defineTheme("jac-theme", {
         base: "vs-dark",
         inherit: true,
@@ -76,9 +71,7 @@ export function CodeEditor({
           "editor.foreground": "#FFFFFF",
         }
       });
-  
       monaco.editor.setTheme("jac-theme");
-      
       console.log("Jac language successfully registered");
       textMateLoaded.current = true;
     } catch (error) {
