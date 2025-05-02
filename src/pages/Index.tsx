@@ -15,7 +15,12 @@ import { DebugPanel, DebugState } from "@/components/DebugPanel";
 import { DebugControls, DebugAction } from "@/components/DebugControls";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
-import { set } from "date-fns";
+
+import {
+  loadPyodideAndJacLang,
+  startExecution,
+} from "@/lib/js2py";
+
 
 const Index = () => {
   const [code, setCode] = useState(defaultCode);
@@ -30,53 +35,14 @@ const Index = () => {
   const isMobile = useMobileDetect();
   const { toast } = useToast();
 
+
   useEffect(() => {
-    const loadPyodideAndJacLang = async () => {
-      try {
-        const pyodideInstance = await loadPyodide({
-          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/",
-          cache: true,
-        });
-
-        const response = await fetch("/jaclang.zip");
-        const buffer = await response.arrayBuffer();
-        const data = new Uint8Array(buffer);
-
-        // Write the zip file to Pyodide's filesystem
-        await pyodideInstance.FS.writeFile("/jaclang.zip", data);
-
-        // Extract JacLang files
-        await pyodideInstance.runPythonAsync(`
-import shutil
-import zipfile
-import os
-
-with zipfile.ZipFile("/jaclang.zip", "r") as zip_ref:
-    zip_ref.extractall("/jaclang")
-
-os.sys.path.append("/jaclang")
-print("JacLang files loaded!")
-`);
-        // Check if JacLang is installed
-        try {
-          await pyodideInstance.runPythonAsync(`
-from jaclang.cli.cli import run
-print("JacLang is available!")
-          `);
-        } catch (validationError) {
-          console.error("JacLang is not available:", validationError);
-        }
-
+    if (!pyodide) {
+      const pyodideInstance = loadPyodideAndJacLang();
+      if (pyodideInstance != null) {
         setPyodide(pyodideInstance);
         setloaded(true);
-      } catch (error) {
-        console.error('Error loading Pyodide or JacLang:', error);
-      } finally {
       }
-    };
-
-    if (!pyodide) {
-      loadPyodideAndJacLang();
     }
   }, [pyodide]);
 
@@ -89,50 +55,17 @@ print("JacLang is available!")
     }
   }, [loaded])
 
+
   const runJacCode = async () => {
     if (!pyodide) return;
-    setIsRunning(true);
     setOutput('');
-    const safeCode = JSON.stringify(code);
-
     try {
-      await pyodide.runPythonAsync(`
-import os
-import sys
-
-jac_code = ${safeCode}
-with open("/tmp/temp.jac", "w") as f:
-    f.write(jac_code)
-
-# Backup actual file descriptors
-stdout_fd = sys.stdout.fileno()
-stderr_fd = sys.stderr.fileno()
-saved_stdout = os.dup(stdout_fd)
-saved_stderr = os.dup(stderr_fd)
-
-with open("/tmp/jac_output.log", "w") as log_file:
-    os.dup2(log_file.fileno(), stdout_fd)
-    os.dup2(log_file.fileno(), stderr_fd)
-
-    try:
-        run("/tmp/temp.jac")
-    except Exception:
-        import traceback
-        traceback.print_exc(file=log_file)
-
-os.dup2(saved_stdout, stdout_fd)
-os.dup2(saved_stderr, stderr_fd)
-os.close(saved_stdout)
-os.close(saved_stderr)
-      `);
-
-      // Now read the output log using Pyodide FS API
-      const outputBuffer = pyodide.FS.readFile("/tmp/jac_output.log");
-      const outputText = new TextDecoder().decode(outputBuffer);
-
-      setOutput(outputText || "No output");
+      setIsRunning(true);
+      const outputText = await startExecution(pyodide, code);
       setIsRunning(false);
+      setOutput(outputText || "No output");
     } catch (error) {
+      console.error("Error running Jac code:", error);
       setOutput(`Error: ${error}`);
     }
   };

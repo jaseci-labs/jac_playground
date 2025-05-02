@@ -29,7 +29,7 @@ export function CodeEditor({
       const { loadWASM } = await import("onigasm");
       const { Registry } = await import("monaco-textmate");
       const { wireTmGrammars } = await import("monaco-editor-textmate");
-      
+
       monaco.languages.register({ id: "jac" });
 
       try {
@@ -37,7 +37,7 @@ export function CodeEditor({
       } catch (e) {
         console.warn("WASM already loaded or failed to load:", e);
       }
-      
+
       const response = await fetch("/jac.tmLanguage.json");
       const grammerConfigRes = await fetch("/language-configuration.json");
       const jacGrammar = await response.json();
