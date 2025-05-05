@@ -17,6 +17,7 @@ import jacLogo from "/jaseci.png";
 import {
   PythonThread,
 } from "@/lib/pythonThread";
+import JacLoadingOverlay from "@/components/JacLoadingOverlay";
 
 
 const Index = () => {
@@ -44,16 +45,17 @@ const Index = () => {
   }, [loaded, pythonThread]);
 
 
-  useEffect(() => {
-    if (loaded) {
-      setTimeout(() => {
-        setloaded(false);
-      }, 1500);
-    }
-  }, [loaded])
+  // useEffect(() => {
+  //   if (loaded) {
+  //     console.log(loaded);
+  //     setTimeout(() => {
+  //       setloaded(false);
+  //     }, 1500);
+  //   }
+  // }, [loaded])
 
   const runJacCode = async () => {
-    // if (!loaded) return; // <-- This is not working, @Malitha work on this.
+    if (!loaded) return; // <-- This is not working, @Malitha work on this.
     if (!pythonThread.loaded) return;
 
     setOutput("");
@@ -116,19 +118,25 @@ const Index = () => {
     }
   }, [breakpoints]);
 
+
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     switch (action) {
 
       // Toggles between debug and run mode.
       case "toggle":
-        setIsDebugging(prev => !prev);
+        // TODO: @Malitha check why this is not working.        
+        setIsDebugging(prev => {
+          const newState = !prev;
 
-        // TODO: @Malitha check why this is not working.
-        if (isDebugging) {
-          console.log("Debugging started <<<<<");
-        } else {
-          console.log("Debugging ended <<<<<");
-        }
+          if (newState) {
+            console.log("Debugging started <<<<<");
+          } else {
+            console.log("Debugging ended <<<<<");
+          }
+
+          return newState;
+        });
+
         console.log(breakpoints);
         break;
 
@@ -159,6 +167,13 @@ const Index = () => {
         break;
     }
   }, [isDebugging, breakpoints]);
+
+
+  if (!loaded) {
+    return (
+      <JacLoadingOverlay />
+    );
+  }
 
   return (
     <ThemeProvider>
