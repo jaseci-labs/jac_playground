@@ -23,22 +23,20 @@ export async function loadPyodideAndJacLang() {
 }
 
 
-export async function startExecution(pyodide, safeCode: string) {
-
+export async function startExecution(pyodide: any, safeCode: string) {
   pyodide.globals.set('SAFE_CODE', safeCode);
   pyodide.globals.set('JAC_PATH', JAC_PATH);
   pyodide.globals.set('LOG_PATH', LOG_PATH);
-
+  
   // Run the debugger module
   await pyodide.runPythonAsync(
     await readFileAsString("/python/debugger.py")
   );
-
+  
   // Run the main script
   await pyodide.runPythonAsync(
     await readFileAsString("/python/main.py")
   );
-
   // Now read the output log using Pyodide FS API
   const outputBuffer = pyodide.FS.readFile(LOG_PATH);
   const outputText = new TextDecoder().decode(outputBuffer);
@@ -71,6 +69,7 @@ async function loadPythonResources(pyodideInstance) {
 async function checkJaclangLoaded(pyodideInstance): Promise<boolean> {
     try {
         await pyodideInstance.runPythonAsync(`from jaclang.cli.cli import run`);
+        console.log("JacLang is available.");
         return true;
     } catch (error) {
         console.error("JacLang is not available:", error);

@@ -38,11 +38,14 @@ const Index = () => {
 
   useEffect(() => {
     if (!pyodide) {
-      const pyodideInstance = loadPyodideAndJacLang();
-      if (pyodideInstance != null) {
-        setPyodide(pyodideInstance);
-        setloaded(true);
-      }
+      const initialize = async () => {
+        const pyodideInstance = await loadPyodideAndJacLang();
+        if (pyodideInstance != null) {
+          setPyodide(pyodideInstance);
+          setloaded(true);
+        }
+      };
+      initialize();
     }
   }, [pyodide]);
 
