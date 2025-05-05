@@ -133,7 +133,7 @@ const Index = () => {
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
-  }, []);
+  }, [isDebugging, breakpoints]);
   
   return (
     <ThemeProvider>
