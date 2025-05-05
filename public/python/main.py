@@ -6,6 +6,11 @@ import sys
 SAFE_CODE = globals()["SAFE_CODE"]
 JAC_PATH  = globals()["JAC_PATH"]
 LOG_PATH  = globals()["LOG_PATH"]
+
+CB_BREAK  = globals()["CB_BREAK"]
+CB_STDOUT = globals()["CB_STDOUT"]
+CB_STDERR = globals()["CB_STDERR"]
+
 Debugger  = globals()["Debugger"]
 
 
@@ -25,7 +30,9 @@ with open(LOG_PATH, "w") as log_file:
     try:
         code = f"from jaclang.cli.cli import run\nrun('{JAC_PATH}')"
         debugger = Debugger(code=code, filepath=JAC_PATH)
+        debugger.cb_break = CB_BREAK
         debugger.do_run()
+
     except Exception:
         import traceback
         traceback.print_exc(file=log_file)

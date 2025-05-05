@@ -1,4 +1,5 @@
 import bdb
+
 from typing import Callable
 
 class Debugger(bdb.Bdb):
@@ -16,7 +17,9 @@ class Debugger(bdb.Bdb):
     def user_line(self, frame):
         """Called when we stop or break at a line."""
         if self.curframe is None:
+            self.cb_break(self, frame.f_lineno)
             self.set_continue()
+
         self.curframe = frame
         if self.stop_here(frame) or self.break_here(frame):
             self.cb_break(self, frame.f_lineno)
@@ -27,6 +30,10 @@ class Debugger(bdb.Bdb):
 
     def set_breakpoint(self, lineno: int) -> None:
         self.set_break(self.filepath, lineno)
+
+    def clear_breakpoints(self) -> None:
+        self.clear_all_breaks()
+
 
     def do_run(self) -> None:
         self.run(self.code)

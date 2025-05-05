@@ -15,9 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
 
 import {
-  loadPyodideAndJacLang,
-  startExecution,
-} from "@/lib/js2py";
+  PythonThread,
+} from "@/lib/pythonThread";
 
 
 const Index = () => {
@@ -25,7 +24,7 @@ const Index = () => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [pyodide, setPyodide] = useState(null);
+  const [pythonThread, setPythonThread] = useState(null);
   const [loaded, setloaded] = useState(false);
   const [isDebugging, setIsDebugging] = useState(false);
   const [debugState, setDebugState] = useState<DebugState | null>(null);
@@ -36,17 +35,13 @@ const Index = () => {
   const codeEditorRef = useRef<CodeEditorHandle>(null);
 
   useEffect(() => {
-    if (!pyodide) {
-      const initialize = async () => {
-        const pyodideInstance = await loadPyodideAndJacLang();
-        if (pyodideInstance != null) {
-          setPyodide(pyodideInstance);
-          setloaded(true);
-        }
-      };
-      initialize();
+    if (!pythonThread) {
+      setPythonThread(new PythonThread(() => {
+        console.log("[JsThread] Loaded callback invoked.");
+        setloaded(true);
+      }));
     }
-  }, [pyodide]);
+  }, [loaded, pythonThread]);
 
 
   useEffect(() => {
@@ -58,13 +53,29 @@ const Index = () => {
   }, [loaded])
 
   const runJacCode = async () => {
-    if (!pyodide) return;
-    setOutput('');
+    // if (!loaded) return; // <-- This is not working, @Malitha work on this.
+    if (!pythonThread.loaded) return;
+
+    setOutput("");
+
+    // Assign all the callbacks --------------------------------------------
+    pythonThread.callbackBreakHit = (line: number) => {
+      codeEditorRef.current?.highlightExecutionLine(line);
+    }
+    pythonThread.callbackStdout = (outputText: string) => {
+      setOutput(prev => prev + outputText);
+    }
+    pythonThread.callbackStderr = (errorText: string) => {
+      setOutput(prev => prev + errorText);
+    }
+    pythonThread.callbackExecEnd = () => {
+      setIsRunning(false);
+    }
+    // Assign all the callbacks --------------------------------------------
+
     try {
       setIsRunning(true);
-      const outputText = await startExecution(pyodide, code);
-      setIsRunning(false);
-      setOutput(outputText || "No output");
+      pythonThread.startExecution(code);
     } catch (error) {
       console.error("Error running Jac code:", error);
       setOutput(`Error: ${error}`);
@@ -100,41 +111,55 @@ const Index = () => {
   };
 
   useEffect(() => {
-    if (breakpoints.length > 0) {
-      console.log("Breakpoints set:", breakpoints);
-    }}, [breakpoints]);
+    if (pythonThread != null && pythonThread.loaded) {
+      pythonThread.setBreakpoints(breakpoints);
+    }
+  }, [breakpoints]);
 
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     switch (action) {
+
+      // Toggles between debug and run mode.
       case "toggle":
-        console.log("Pause debugging");
         setIsDebugging(prev => !prev);
-        console.log(breakpoints[0]);
-        codeEditorRef.current?.highlightExecutionLine(2);
+
+        // TODO: @Malitha check why this is not working.
+        if (isDebugging) {
+          console.log("Debugging started <<<<<");
+        } else {
+          console.log("Debugging ended <<<<<");
+        }
+        console.log(breakpoints);
         break;
+
       case "continue":
         console.log("Continue debugging");
         break;
+
       case "stepOver":
         console.log("Step over");
         break;
+
       case "stepInto":
         console.log("Step into");
         break;
+
       case "stepOut":
         console.log("Step out");
         break;
+
       case "restart":
         console.log("Restart debugging");
         break;
+
       case "stop":
         console.log("Stop debugging");
         setIsDebugging(false);
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
-  }, []);
-  
+  }, [isDebugging, breakpoints]);
+
   return (
     <ThemeProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
