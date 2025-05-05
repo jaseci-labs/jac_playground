@@ -8,6 +8,7 @@ var breakpoints = [];
 
 const JAC_PATH = "/tmp/main.jac";
 const LOG_PATH = "/tmp/logs.log";
+const DOT_PATH = "/home/pyodide/main.dot";
 
 // ----------------------------------------------------------------------------
 // Message passing protocol
@@ -124,15 +125,21 @@ function callbackStderr(output) {
   self.postMessage({ type: 'stderr', output: output });
 }
 
+function callbackDot(output) {
+  self.postMessage({ type: 'execDot', output: output });
+}
+
 
 async function startExecution(safeCode) {
 
   pyodide.globals.set('SAFE_CODE', safeCode);
   pyodide.globals.set('JAC_PATH', JAC_PATH);
   pyodide.globals.set('LOG_PATH', LOG_PATH);
+  pyodide.globals.set('DOT_PATH', DOT_PATH);
   pyodide.globals.set('CB_BREAK', callbackBreak);
   pyodide.globals.set('CB_STDOUT', callbackStdout);
   pyodide.globals.set('CB_STDERR', callbackStderr);
+  pyodide.globals.set('CB_DOT', callbackDot);
 
   // Run the debugger module
   await pyodide.runPythonAsync(

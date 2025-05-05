@@ -11,6 +11,7 @@ export class PythonThread {
   callbackBreakHit: (line: number) => void;
   callbackStdout: (output: string) => void;
   callbackStderr: (output: string) => void;
+  callbackDot: (output: string) => void;
 
   constructor(loadedCallback: () => void) {
     this.pythonThread = new Worker('/python/python.js');

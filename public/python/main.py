@@ -6,10 +6,12 @@ import sys
 SAFE_CODE = globals()["SAFE_CODE"]
 JAC_PATH  = globals()["JAC_PATH"]
 LOG_PATH  = globals()["LOG_PATH"]
+DOT_PATH  = globals()["DOT_PATH"]
 
 CB_BREAK  = globals()["CB_BREAK"]
 CB_STDOUT = globals()["CB_STDOUT"]
 CB_STDERR = globals()["CB_STDERR"]
+CB_DOT    = globals()["CB_DOT"]
 
 Debugger  = globals()["Debugger"]
 
@@ -29,9 +31,18 @@ with open(LOG_PATH, "w") as log_file:
 
     try:
         code = f"from jaclang.cli.cli import run\nrun('{JAC_PATH}')"
+
         debugger = Debugger(code=code, filepath=JAC_PATH)
         debugger.cb_break = CB_BREAK
         debugger.do_run()
+
+        # Generate the dot file.
+        from jaclang.cli.cli import dot
+        dot(JAC_PATH)
+
+        with open(DOT_PATH, "r") as dot_file:
+            graph = dot_file.read()
+            CB_DOT(graph)
 
     except Exception:
         import traceback

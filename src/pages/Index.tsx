@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Play, RefreshCw, Menu } from "lucide-react";
+import { Play, RefreshCw, Menu, LayoutPanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CodeEditor, CodeEditorHandle } from "@/components/CodeEditor";
 import { OutputPanel } from "@/components/OutputPanel";
@@ -18,6 +18,7 @@ import {
   PythonThread,
 } from "@/lib/pythonThread";
 import JacLoadingOverlay from "@/components/JacLoadingOverlay";
+import { GraphViewer } from "@/components/GraphViewer";
 
 
 const Index = () => {
@@ -218,6 +219,15 @@ const Index = () => {
                   <RefreshCw className="h-4 w-4" />
                   <span>Reset</span>
                 </Button>
+
+                  <Button
+                    variant="outline"
+                    // onClick={toggleGraphViewer}
+                    className={`space-x-1 bg-secondary/20 text-secondary' : ''}`}
+                  >
+                    <LayoutPanelLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Graph</span>
+                  </Button>
               </div>
             </div>
 
@@ -240,13 +250,29 @@ const Index = () => {
                     />
                   </div>
                   {
-                    isDebugging && (
+                    isDebugging ? (
                       <div className="flex-1">
                         <DebugPanel
                           debugState={debugState}
                           className="h-full"
                         />
                       </div>
+                    ) : (
+                        <GraphViewer
+                          graphData={
+                            {
+                              nodes: [
+                                { id: "1", label: "Node 1", type: "type1" },
+                                { id: "2", label: "Node 2", type: "type2" },
+                              ],
+                              edges: [
+                                { source: "1", target: "2", label: "Edge 1" },
+                              ],
+                            }
+                          }
+                          className="h-full"
+                          onClose={true}
+                        />
                     )
                   }
                 </div>
