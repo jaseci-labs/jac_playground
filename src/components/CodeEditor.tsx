@@ -3,6 +3,7 @@ import Editor, { OnMount, loader } from "@monaco-editor/react";
 import { cn } from "@/lib/utils";
 import "./CodeEditor.css";
 import { configureTheme, loadSyntax } from "@/lib/syntaxHighlighting";
+import { clearLineHighlighter, lineHighlighter } from "@/lib/debuggerService";
 
 interface CodeEditorProps {
   value: string;
@@ -20,6 +21,8 @@ export function CodeEditor({
   const editorRef = useRef<any>(null);
   const breakpointsRef = useRef<Set<number>>(new Set());
   const decorationsCollectionRef = useRef<any>(null);
+  const executionLineRef = useRef<number | null>(null);
+  const executionLineDecorationsRef = useRef<string[]>([]);
   const monacoRef = useRef<any>(null);
   const textMateLoaded = useRef(false);
 
@@ -33,6 +36,24 @@ export function CodeEditor({
     } catch (error) {
       console.error("Failed to register Jac language:", error);
     }
+  }, []);
+
+  const highlightExecutionLine = useCallback(async (lineNumber: number) => {
+    await lineHighlighter(
+      editorRef,
+      monacoRef,
+      executionLineRef,
+      executionLineDecorationsRef,
+      lineNumber
+    );
+  }, []);
+
+  const clearExecutionLine = useCallback(async () => {
+    await clearLineHighlighter(
+      editorRef,
+      executionLineDecorationsRef,
+      executionLineRef
+    )
   }, []);
 
   const handleEditorDidMount: OnMount = useCallback(async (editor, monaco) => {
@@ -61,8 +82,6 @@ export function CodeEditor({
             glyphMarginHoverMessage: { value: "Breakpoint" },
           },
         }));
-
-        console.log(newDecorations);
 
         if (decorationsCollectionRef.current) {
           decorationsCollectionRef.current.set(newDecorations);
