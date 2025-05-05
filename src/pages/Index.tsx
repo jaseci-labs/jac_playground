@@ -1,9 +1,7 @@
-declare var loadPyodide: any;
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Play, RefreshCw, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CodeEditor } from "@/components/CodeEditor";
+import { CodeEditor, CodeEditorHandle } from "@/components/CodeEditor";
 import { OutputPanel } from "@/components/OutputPanel";
 import { ExamplesSidebar } from "@/components/ExamplesSidebar";
 import { ResizablePanel } from "@/components/ResizablePanel";
@@ -32,9 +30,10 @@ const Index = () => {
   const [isDebugging, setIsDebugging] = useState(false);
   const [debugState, setDebugState] = useState<DebugState | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const isMobile = useMobileDetect();
   const { toast } = useToast();
-
+  const codeEditorRef = useRef<CodeEditorHandle>(null);
 
   useEffect(() => {
     if (!pyodide) {
@@ -57,7 +56,6 @@ const Index = () => {
       }, 1500);
     }
   }, [loaded])
-
 
   const runJacCode = async () => {
     if (!pyodide) return;
@@ -97,9 +95,43 @@ const Index = () => {
     setShowMobileSidebar(!showMobileSidebar);
   };
 
+  const handleBreakpointsChange = (newBreakpoints: number[]) => {
+    setBreakpoints(newBreakpoints);
+  };
+
+  useEffect(() => {
+    if (breakpoints.length > 0) {
+      console.log("Breakpoints set:", breakpoints);
+    }}, [breakpoints]);
+
   const handleDebugAction = useCallback(async (action: DebugAction) => {
-    if (action === "toggle") {
-      setIsDebugging(prev => !prev);
+    switch (action) {
+      case "toggle":
+        console.log("Pause debugging");
+        setIsDebugging(prev => !prev);
+        console.log(breakpoints[0]);
+        codeEditorRef.current?.highlightExecutionLine(2);
+        break;
+      case "continue":
+        console.log("Continue debugging");
+        break;
+      case "stepOver":
+        console.log("Step over");
+        break;
+      case "stepInto":
+        console.log("Step into");
+        break;
+      case "stepOut":
+        console.log("Step out");
+        break;
+      case "restart":
+        console.log("Restart debugging");
+        break;
+      case "stop":
+        console.log("Stop debugging");
+        setIsDebugging(false);
+        codeEditorRef.current?.clearExecutionLine();
+        break;
     }
   }, []);
   
@@ -151,7 +183,7 @@ const Index = () => {
 
             <DebugControls
               isDebugging={isDebugging}
-              isPaused={isPaused}
+              isPaused={true}
               onDebugAction={handleDebugAction}
             />
 
@@ -160,12 +192,11 @@ const Index = () => {
                 <div className="flex h-full">
                   <div className={`${isDebugging ? 'w-1/2' : 'w-full'} border-r border-border`}>
                     <CodeEditor
+                      ref={codeEditorRef}
                       value={code}
                       onChange={setCode}
-                      language="jac"
-                      // breakpoints={breakpoints}
-                      // onToggleBreakpoint={handleToggleBreakpoint}
                       className="h-full"
+                      onBreakpointsChange={handleBreakpointsChange}
                     />
                   </div>
                   {
