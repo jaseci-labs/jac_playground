@@ -72,6 +72,7 @@ const Index = () => {
     }
     pythonThread.callbackExecEnd = () => {
       setIsRunning(false);
+      codeEditorRef.current?.clearExecutionLine();
     }
     // Assign all the callbacks --------------------------------------------
 
@@ -116,24 +117,18 @@ const Index = () => {
     if (pythonThread != null && pythonThread.loaded) {
       pythonThread.setBreakpoints(breakpoints);
     }
-  }, [breakpoints]);
+  }, [breakpoints, pythonThread]);
 
 
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     switch (action) {
 
+
       // Toggles between debug and run mode.
       case "toggle":
-        // TODO: @Malitha check why this is not working.        
+        // TODO: @Malitha check why this is not working.
         setIsDebugging(prev => {
           const newState = !prev;
-
-          if (newState) {
-            console.log("Debugging started <<<<<");
-          } else {
-            console.log("Debugging ended <<<<<");
-          }
-
           return newState;
         });
 
@@ -141,19 +136,19 @@ const Index = () => {
         break;
 
       case "continue":
-        console.log("Continue debugging");
+        pythonThread.continueExecution();
         break;
 
       case "stepOver":
-        console.log("Step over");
+        pythonThread.stepOver();
         break;
 
       case "stepInto":
-        console.log("Step into");
+        pythonThread.stepInto();
         break;
 
       case "stepOut":
-        console.log("Step out");
+        pythonThread.stepOut();
         break;
 
       case "restart":
@@ -161,6 +156,7 @@ const Index = () => {
         break;
 
       case "stop":
+        pythonThread.terminate();
         console.log("Stop debugging");
         setIsDebugging(false);
         codeEditorRef.current?.clearExecutionLine();

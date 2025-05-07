@@ -4,7 +4,11 @@
 // ----------------------------------------------------------------------------
 
 var pyodide = null;
-var breakpoints = [];
+var breakpoints_buff = [];
+var dbg = null;  // The debugger instance.
+
+var sharedInts = null;
+
 
 const JAC_PATH = "/tmp/main.jac";
 const LOG_PATH = "/tmp/logs.log";
@@ -18,6 +22,8 @@ onmessage = async (event) => {
   switch (data.type) {
 
     case 'initialize':
+      sharedInts = new Int32Array(data.sharedBuffer);
+
       importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js");
       pyodide = await loadPyodide();
       const success = await loadPyodideAndJacLang();
@@ -26,7 +32,15 @@ onmessage = async (event) => {
       break;
 
     case 'setBreakpoints':
-      breakpoints = data.breakpoints;
+      if (dbg) {
+        dbg.clear_breakpoints();
+        for (const bp of data.breakpoints) {
+          dbg.set_breakpoint(bp);
+          logMessage(`Breakpoint set at line ${bp}`);
+        }
+      } else {
+        breakpoints_buff = data.breakpoints;
+      }
       break;
 
     case 'startExecution':
@@ -73,7 +87,14 @@ async function readFileAsBytes(fileName) {
 async function loadPyodideAndJacLang() {
   try {
     await loadPythonResources(pyodide);
-    return await checkJaclangLoaded(pyodide);
+    success = await checkJaclangLoaded(pyodide);
+
+    // Run the debugger module.
+    await pyodide.runPythonAsync(
+      await readFileAsString("/python/debugger.py")
+    );
+    return success;
+
   } catch (error) {
     console.error("Error loading JacLang:", error);
     return false;
@@ -107,11 +128,74 @@ async function checkJaclangLoaded(pyodide) {
 // ----------------------------------------------------------------------------
 
 function callbackBreak(dbg, line) {
-  dbg.clear_breakpoints();
-  for (const bp of breakpoints) {
-    dbg.set_breakpoint(bp);
-  }
+
+  logMessage("before ui");
+  waitingForUi = true;
   self.postMessage({ type: 'breakHit', line: line });
+
+  continueExecution = false;
+  while (!continueExecution) {
+    Atomics.wait(sharedInts, 0, 0); // Block until the UI responds.
+    sharedInts[0] = 0;  // Reset the shared memory.
+
+    switch (sharedInts[1]) {
+      case 1: // Clear breakpoints
+        if (dbg) {
+          dbg.clear_breakpoints();
+          logMessage("Breakpoints cleared.");
+        }
+        break;
+
+      case 2: // Set breakpoint
+        const line = sharedInts[2];
+        if (dbg) {
+          dbg.set_breakpoint(line);
+          logMessage(`Breakpoint set at line ${line}`);
+        }
+        break;
+
+      case 3: // Continue execution
+        dbg.do_continue();
+        continueExecution = true;
+        break;
+
+      case 4: // Step over
+        if (dbg) {
+          dbg.do_step_over();
+          logMessage("Stepped over.");
+        }
+        continueExecution = true;
+        break;
+
+      case 5: // Step into
+        if (dbg) {
+          dbg.do_step_into();
+          logMessage("Stepped into.");
+        }
+        continueExecution = true;
+        break;
+
+      case 6: // Step out
+        if (dbg) {
+          dbg.do_step_out();
+          logMessage("Stepped out.");
+        }
+        continueExecution = true;
+        break;
+
+      case 7: // Terminat execution
+        if (dbg) {
+          dbg.do_terminate();
+          logMessage("Execution stopped.");
+        }
+        continueExecution = true;
+        break;
+    }
+
+  }
+
+
+  logMessage("after ui");
 }
 
 
@@ -134,10 +218,14 @@ async function startExecution(safeCode) {
   pyodide.globals.set('CB_STDOUT', callbackStdout);
   pyodide.globals.set('CB_STDERR', callbackStderr);
 
-  // Run the debugger module
-  await pyodide.runPythonAsync(
-    await readFileAsString("/python/debugger.py")
-  );
+  dbg = pyodide.globals.get('Debugger')();
+  pyodide.globals.set('debugger', dbg);
+
+  dbg.clear_breakpoints();
+  for (const bp of breakpoints_buff) {
+    dbg.set_breakpoint(bp);
+    logMessage(`Breakpoint set at line ${bp}`);
+  }
 
   // Run the main script
   logMessage("Execution started.");
@@ -145,6 +233,7 @@ async function startExecution(safeCode) {
     await readFileAsString("/python/main.py")
   );
   logMessage("Execution finished.");
+  dbg = null;
 
   // Now read the output log using Pyodide FS API
   const outputBuffer = pyodide.FS.readFile(LOG_PATH);

@@ -1,5 +1,10 @@
+import io
 import os
 import sys
+
+import contextlib
+from collections.abc import Iterable
+import logging
 
 
 # If these variables are not set by the pyodide this will raise an exception.
@@ -11,34 +16,55 @@ CB_BREAK  = globals()["CB_BREAK"]
 CB_STDOUT = globals()["CB_STDOUT"]
 CB_STDERR = globals()["CB_STDERR"]
 
-Debugger  = globals()["Debugger"]
+debugger  = globals()["debugger"]
+
+# Redirect stdout and stderr to javascript callback.
+class JsIO(io.StringIO):
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        super().__init__(*args, **kwargs)
+
+    def write(self, s: str, /) -> int:
+        self.callback(s)
+        super().write(s)
+
+    def writelines(self, lines: Iterable[str], /) -> None:
+        for line in lines:
+            self.callback(line)
+        super().writelines(lines)
 
 
 with open(JAC_PATH, "w") as f:
     f.write(SAFE_CODE)
 
+
 # Backup actual file descriptors.
-stdout_fd = sys.stdout.fileno()
-stderr_fd = sys.stderr.fileno()
-saved_stdout = os.dup(stdout_fd)
-saved_stderr = os.dup(stderr_fd)
+# stdout_fd = sys.stdout.fileno()
+# stderr_fd = sys.stderr.fileno()
+# saved_stdout = os.dup(stdout_fd)
+# saved_stderr = os.dup(stderr_fd)
 
 with open(LOG_PATH, "w") as log_file:
-    os.dup2(log_file.fileno(), stdout_fd)
-    os.dup2(log_file.fileno(), stderr_fd)
+    # os.dup2(log_file.fileno(), stdout_fd)
+    # os.dup2(log_file.fileno(), stderr_fd)
 
-    try:
-        code = f"from jaclang.cli.cli import run\nrun('{JAC_PATH}')"
-        debugger = Debugger(code=code, filepath=JAC_PATH)
-        debugger.cb_break = CB_BREAK
-        debugger.do_run()
+    with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
+         contextlib.redirect_stderr(JsIO(CB_STDERR)):
 
-    except Exception:
-        import traceback
-        traceback.print_exc(file=log_file)
+        try:
+            code = \
+            "from jaclang.cli.cli import run\n" \
+            f"run('{JAC_PATH}')\n"
+            debugger.set_code(code=code, filepath=JAC_PATH)
+            debugger.cb_break = CB_BREAK
+            debugger.do_run()
+
+        except Exception:
+            import traceback
+            traceback.print_exc(file=log_file)
 
 # Restore actual file descriptors.
-os.dup2(saved_stdout, stdout_fd)
-os.dup2(saved_stderr, stderr_fd)
-os.close(saved_stdout)
-os.close(saved_stderr)
+# os.dup2(saved_stdout, stdout_fd)
+# os.dup2(saved_stderr, stderr_fd)
+# os.close(saved_stdout)
+# os.close(saved_stderr)
