@@ -1,9 +1,5 @@
-
-// import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useRef } from "react";
-// import { Loader2 } from "lucide-react";
-
+import React, { useRef } from "react";
 interface DebugPanelProps {
   graph: JSON;
   className?: string;
@@ -12,7 +8,6 @@ interface DebugPanelProps {
 declare var vis: any;
 
 export function DebugPanel({ graph, className }: DebugPanelProps) {
-
   const networkElement = useRef<HTMLDivElement>(null);
 
   let network = null;
@@ -22,19 +17,19 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
   let data_nodes = [];
   let data_edges = [];
 
-  function nodesEqual(node1, node2) {
+  function nodesEqual(node1: any, node2: any) {
     return node1.id === node2.id && node1.label === node2.label;
   }
-  function edgesEqual(edge1, edge2) {
+  function edgesEqual(edge1: any, edge2: any) {
     return edge1.from === edge2.from && edge1.to === edge2.to;
   }
-  function nodeExists(node) {
+  function nodeExists(node: any) {
     for (let n of data_nodes) {
       if (nodesEqual(n, node)) return true;
     }
     return false;
   }
-  function edgeExists(edge) {
+  function edgeExists(edge: any) {
     for (let e of data_edges) {
       if (edgesEqual(e, edge)) return true;
     }
@@ -42,8 +37,8 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
   }
 
   function hideHome() {
-    // let home = document.getElementById("home");
-    // home.style.display = "none";
+    let home = document.getElementById("home");
+    home.style.display = "none";
   }
 
   function showHome() {
@@ -95,12 +90,9 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
 
   }
 
-
-  console.log("DebugPanel graph before new graph ************************************:", graph);
-  if (graph != null && Array.isArray(graph['nodes']) && Array.isArray(graph['edges'])) {
+  if (networkElement.current && graph != null && Array.isArray(graph['nodes']) && Array.isArray(graph['edges'])) {
     newGraph(graph['nodes'], graph['edges']);
   }
-  console.log("DebugPanel graph after new graph <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 
   // window.addEventListener('message', event => {
   //   const message = event.data;
@@ -124,10 +116,7 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
     )}>
 
       <div className="flex flex-col items-center gap-2">
-        {/* <Loader2 className="h-8 w-8 animate-spin text-primary" /> */}
-        <p style={{
-          // width: "100vw",
-          // height: "100vh",
+        <p id="home" style={{
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -137,10 +126,7 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
         }}>Jaclang Graph Visualizer</p>
 
         <div ref={networkElement} id="mynetwork"></div>
-
       </div>
-
-
     </div>
   );
 }

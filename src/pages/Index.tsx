@@ -24,6 +24,7 @@ const Index = () => {
 
   const [code, setCode] = useState(defaultCode);
   const [output, setOutput] = useState("");
+  const [outIsError, setOutIsError] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [pythonThread, setPythonThread] = useState(null);
@@ -68,9 +69,11 @@ const Index = () => {
     }
     pythonThread.callbackStdout = (outputText: string) => {
       setOutput(prev => prev + outputText);
+      setOutIsError(false);
     }
     pythonThread.callbackStderr = (errorText: string) => {
       setOutput(prev => prev + errorText);
+      setOutIsError(true);
     }
     pythonThread.callbackExecEnd = () => {
       setIsRunning(false);
@@ -267,6 +270,7 @@ const Index = () => {
               >
                 <OutputPanel
                   output={output}
+                  outIsError={outIsError}
                   isLoading={isRunning}
                   // isDebugging={isDebugging}
                   className="h-full"
