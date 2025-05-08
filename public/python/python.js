@@ -45,10 +45,8 @@ onmessage = async (event) => {
 
     case 'startExecution':
       logMessage("Starting execution...");
-      const output = await startExecution(data.code);
-      logMessage(`Execution finished. output=${output}`);
-      // TODO: No more needed here.
-      self.postMessage({ type: 'stdout', output: output });
+      await startExecution(data.code);
+      logMessage(`Execution finished`);
       self.postMessage({ type: 'execEnd' });
       break;
 
@@ -126,6 +124,7 @@ async function checkJaclangLoaded(pyodide) {
 // ----------------------------------------------------------------------------
 // Execution
 // ----------------------------------------------------------------------------
+
 
 function callbackBreak(dbg, line) {
 
@@ -209,16 +208,21 @@ function callbackStderr(output) {
 }
 
 
+function callbackGraph(graph) {
+  self.postMessage({ type: 'jacGraph', graph: graph });
+}
+
+
 async function startExecution(safeCode) {
 
   pyodide.globals.set('SAFE_CODE', safeCode);
   pyodide.globals.set('JAC_PATH', JAC_PATH);
-  pyodide.globals.set('LOG_PATH', LOG_PATH);
-  pyodide.globals.set('CB_BREAK', callbackBreak);
   pyodide.globals.set('CB_STDOUT', callbackStdout);
   pyodide.globals.set('CB_STDERR', callbackStderr);
 
   dbg = pyodide.globals.get('Debugger')();
+  dbg.cb_break = callbackBreak;
+  dbg.cb_graph = callbackGraph;
   pyodide.globals.set('debugger', dbg);
 
   dbg.clear_breakpoints();
@@ -235,8 +239,4 @@ async function startExecution(safeCode) {
   logMessage("Execution finished.");
   dbg = null;
 
-  // Now read the output log using Pyodide FS API
-  const outputBuffer = pyodide.FS.readFile(LOG_PATH);
-  const outputText = new TextDecoder().decode(outputBuffer);
-  return outputText;
 }

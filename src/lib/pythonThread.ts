@@ -1,6 +1,7 @@
 
 /**
- *   Shared ints layout:
+ *   Shared ints layout (communication protocol):
+ *
  *   0:
  *      0 - python thread is waiting for input
  *      1 - python thread get input instruction from index 1
@@ -12,6 +13,8 @@
  *      5 - step into
  *      6 - step out
  *      7 - terminate
+ *   2:
+ *       line number for breakpoint / Or values for other instructions
  */
 
 const SHARED_INT_SIZE = 3;
@@ -29,6 +32,7 @@ export class PythonThread {
   callbackBreakHit: (line: number) => void;
   callbackStdout: (output: string) => void;
   callbackStderr: (output: string) => void;
+  callbackJacGraph: (graph: string) => void;
 
   constructor(loadedCallback: () => void) {
 
@@ -156,9 +160,16 @@ export class PythonThread {
         break;
 
       case 'execEnd':
-        console.log('[JsThread] Execution result got');
+        this.logMessage("Execution ended");
         this.callbackExecEnd();
         this.isRunning = false;
+        break;
+
+      case 'jacGraph':
+        this.logMessage('JacGraph received');
+        if (this.callbackJacGraph !== undefined) {
+          this.callbackJacGraph(data.graph);
+        }
         break;
 
       default:

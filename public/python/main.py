@@ -4,15 +4,10 @@ import sys
 
 import contextlib
 from collections.abc import Iterable
-import logging
-
 
 # If these variables are not set by the pyodide this will raise an exception.
 SAFE_CODE = globals()["SAFE_CODE"]
 JAC_PATH  = globals()["JAC_PATH"]
-LOG_PATH  = globals()["LOG_PATH"]
-
-CB_BREAK  = globals()["CB_BREAK"]
 CB_STDOUT = globals()["CB_STDOUT"]
 CB_STDERR = globals()["CB_STDERR"]
 
@@ -38,33 +33,16 @@ with open(JAC_PATH, "w") as f:
     f.write(SAFE_CODE)
 
 
-# Backup actual file descriptors.
-# stdout_fd = sys.stdout.fileno()
-# stderr_fd = sys.stderr.fileno()
-# saved_stdout = os.dup(stdout_fd)
-# saved_stderr = os.dup(stderr_fd)
+with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
+        contextlib.redirect_stderr(JsIO(CB_STDERR)):
 
-with open(LOG_PATH, "w") as log_file:
-    # os.dup2(log_file.fileno(), stdout_fd)
-    # os.dup2(log_file.fileno(), stderr_fd)
+    try:
+        code = \
+        "from jaclang.cli.cli import run\n" \
+        f"run('{JAC_PATH}')\n"
+        debugger.set_code(code=code, filepath=JAC_PATH)
+        debugger.do_run()
 
-    with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
-         contextlib.redirect_stderr(JsIO(CB_STDERR)):
-
-        try:
-            code = \
-            "from jaclang.cli.cli import run\n" \
-            f"run('{JAC_PATH}')\n"
-            debugger.set_code(code=code, filepath=JAC_PATH)
-            debugger.cb_break = CB_BREAK
-            debugger.do_run()
-
-        except Exception:
-            import traceback
-            traceback.print_exc(file=log_file)
-
-# Restore actual file descriptors.
-# os.dup2(saved_stdout, stdout_fd)
-# os.dup2(saved_stderr, stderr_fd)
-# os.close(saved_stdout)
-# os.close(saved_stderr)
+    except Exception:
+        import traceback
+        traceback.print_exc()

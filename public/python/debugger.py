@@ -1,5 +1,6 @@
 import bdb
 
+import sys
 from typing import Callable
 
 class Debugger(bdb.Bdb):
@@ -12,8 +13,8 @@ class Debugger(bdb.Bdb):
         self.curframe = None
         self.breakpoint_buff = []
 
-        # Callback after a breakpoint is hit.
         self.cb_break: Callable[[Debugger, int], None] = lambda dbg, lineno: None
+        self.cb_graph: Callable[[str], None] = lambda graph: None
 
 
     def set_code(self, code: str, filepath: str) -> None:
@@ -25,12 +26,22 @@ class Debugger(bdb.Bdb):
 
     def user_line(self, frame):
         """Called when we stop or break at a line."""
+        self._send_graph()
         if self.curframe is None:
             self.set_continue()
             self.curframe = frame
         else:
             self.curframe = frame
             self.cb_break(self, frame.f_lineno)
+
+
+    def _send_graph(self) -> None:
+        try:
+            graph_str = self.runeval("dotgen(as_json=True)")
+            self.cb_graph(graph_str)
+            self.set_trace()
+        except Exception as e:
+            print(str(e), file=sys.stderr)
 
     # -------------------------------------------------------------------------
     # Public API.

@@ -74,6 +74,10 @@ const Index = () => {
       setIsRunning(false);
       codeEditorRef.current?.clearExecutionLine();
     }
+    pythonThread.callbackJacGraph = (graph: string) => {
+      graph = JSON.parse(graph);
+      console.log("JacGraph received:", graph);
+    }
     // Assign all the callbacks --------------------------------------------
 
     try {
@@ -131,8 +135,6 @@ const Index = () => {
           const newState = !prev;
           return newState;
         });
-
-        console.log(breakpoints);
         break;
 
       case "continue":
