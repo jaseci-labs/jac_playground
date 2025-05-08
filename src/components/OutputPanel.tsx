@@ -4,12 +4,14 @@ import { Loader2, Terminal } from "lucide-react";
 
 interface OutputPanelProps {
   output: string;
+  outIsError?: boolean;
   isLoading?: boolean;
   className?: string;
 }
 
 export function OutputPanel({
   output,
+  outIsError,
   isLoading = false,
   className,
 }: OutputPanelProps) {
@@ -33,9 +35,14 @@ export function OutputPanel({
         )}
       </div>
       <div className="flex-1 p-2 bg-editor-background rounded-md text-editor-foreground">
-        <pre className="whitespace-pre-wrap text-sm text-green-400">
-          {output || "// Output will appear here after running code"}
-        </pre>
+        <pre
+              className={cn(
+              "whitespace-pre-wrap text-sm",
+              outIsError ? "text-red-400" : "text-white-500"
+              )}
+            >
+              {output || "// Output will appear here after running code"}
+            </pre>
       </div>
     </div>
   );
