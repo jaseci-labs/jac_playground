@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { defaultCode } from "@/lib/examples";
 import { useMobileDetect } from "@/hooks/useMobileDetect";
-import { DebugPanel, DebugState } from "@/components/DebugPanel";
+import { DebugPanel } from "@/components/DebugPanel";
 import { DebugControls, DebugAction } from "@/components/DebugControls";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
@@ -21,6 +21,7 @@ import JacLoadingOverlay from "@/components/JacLoadingOverlay";
 
 
 const Index = () => {
+
   const [code, setCode] = useState(defaultCode);
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -28,7 +29,7 @@ const Index = () => {
   const [pythonThread, setPythonThread] = useState(null);
   const [loaded, setloaded] = useState(false);
   const [isDebugging, setIsDebugging] = useState(false);
-  const [debugState, setDebugState] = useState<DebugState | null>(null);
+  const [graph, setGraph] = useState<JSON>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const isMobile = useMobileDetect();
@@ -54,6 +55,7 @@ const Index = () => {
   //   }
   // }, [loaded])
 
+
   const runJacCode = async () => {
     if (!loaded) return; // <-- This is not working, @Malitha work on this.
     if (!pythonThread.loaded) return;
@@ -74,9 +76,13 @@ const Index = () => {
       setIsRunning(false);
       codeEditorRef.current?.clearExecutionLine();
     }
-    pythonThread.callbackJacGraph = (graph: string) => {
-      graph = JSON.parse(graph);
+
+    let isNewGraph: boolean = true;
+    pythonThread.callbackJacGraph = (graph_str: string) => {
+      const graph = JSON.parse(graph_str);
       console.log("JacGraph received:", graph);
+      setGraph(graph);
+      isNewGraph = false;
     }
     // Assign all the callbacks --------------------------------------------
 
@@ -167,11 +173,13 @@ const Index = () => {
   }, [isDebugging, breakpoints]);
 
 
+
   if (!loaded) {
     return (
       <JacLoadingOverlay />
     );
   }
+
 
   return (
     <ThemeProvider>
@@ -241,7 +249,7 @@ const Index = () => {
                     isDebugging && (
                       <div className="flex-1">
                         <DebugPanel
-                          debugState={debugState}
+                          graph={graph}
                           className="h-full"
                         />
                       </div>

@@ -124,7 +124,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           onChange={(value) => onChange(value || "")}
           onMount={handleEditorDidMount}
           options={{
-            fontSize: 15,
+            fontSize: 32,
             minimap: { enabled: false },
             scrollbar: {
               vertical: "visible",

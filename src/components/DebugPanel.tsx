@@ -1,189 +1,146 @@
 
 // import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useRef } from "react";
 // import { Loader2 } from "lucide-react";
 
 interface DebugPanelProps {
-  debugState: DebugState | null;
+  graph: JSON;
   className?: string;
 }
 
-export interface DebugState {
-  currentLine: number;
-  variables: Record<string, any>;
-  callStack: string[];
-  graph: {
-    nodes: Array<{
-      id: string;
-      label: string;
-      type: string;
-    }>;
-    edges: Array<{
-      source: string;
-      target: string;
-      label?: string;
-    }>;
-  };
-}
+declare var vis: any;
 
-export function DebugPanel({ debugState, className }: DebugPanelProps) {
-  // if (!debugState) {
-    return (
-      <div className={cn(
-        "h-full w-full flex items-center justify-center bg-card text-foreground", 
-        className
-      )}>
-        <div className="flex flex-col items-center gap-2">
-          {/* <Loader2 className="h-8 w-8 animate-spin text-primary" /> */}
-            <p style={{
-              // width: "100vw",
-              // height: "100vh",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: "2em",
-              fontWeight: "bold",
-              color: "#f1982a"
-            }}>Jaclang Graph Visualizer</p>
-        </div>
+export function DebugPanel({ graph, className }: DebugPanelProps) {
+
+  const networkElement = useRef<HTMLDivElement>(null);
+
+  let network = null;
+  let nodes = null;
+  let edges = null;
+
+  let data_nodes = [];
+  let data_edges = [];
+
+  function nodesEqual(node1, node2) {
+    return node1.id === node2.id && node1.label === node2.label;
+  }
+  function edgesEqual(edge1, edge2) {
+    return edge1.from === edge2.from && edge1.to === edge2.to;
+  }
+  function nodeExists(node) {
+    for (let n of data_nodes) {
+      if (nodesEqual(n, node)) return true;
+    }
+    return false;
+  }
+  function edgeExists(edge) {
+    for (let e of data_edges) {
+      if (edgesEqual(e, edge)) return true;
+    }
+    return false;
+  }
+
+  function hideHome() {
+    // let home = document.getElementById("home");
+    // home.style.display = "none";
+  }
+
+  function showHome() {
+    // let home = document.getElementById("home");
+    // home.style.display = "flex";
+  }
+
+  function destroyGraph() {
+    if (network !== null) {
+      network.destroy();
+      network = null;
+    }
+  }
+
+  function newGraph(p_data_nodes, p_data_edges) {
+    hideHome();
+    destroyGraph();
+
+    nodes = new vis.DataSet(p_data_nodes);
+    edges = new vis.DataSet(p_data_edges);
+
+    let container = networkElement.current;
+
+    let options = {};
+    let data = { nodes: nodes, edges: edges };
+    network = new vis.Network(container, data, options);
+  }
+
+  function updateGraph(p_data_nodes, p_data_edges) {
+    hideHome();
+    if (network === null) {
+      newGraph(p_data_nodes, p_data_edges);
+    } else {
+      for (let node of p_data_nodes) {
+        if (!nodeExists(node)) {
+          data_nodes.push(node);
+          nodes.add([node]);
+        }
+      }
+      for (let edge of p_data_edges) {
+        if (!edgeExists(edge)) {
+          data_edges.push(edge);
+          edges.add([edge]);
+        }
+      }
+      network.setOptions({ physics: { enabled: true } });
+      network.stablize();
+    }
+
+  }
+
+
+  console.log("DebugPanel graph before new graph ************************************:", graph);
+  if (graph != null && Array.isArray(graph['nodes']) && Array.isArray(graph['edges'])) {
+    newGraph(graph['nodes'], graph['edges']);
+  }
+  console.log("DebugPanel graph after new graph <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+
+  // window.addEventListener('message', event => {
+  //   const message = event.data;
+  //   if (message['command'] == 'init') {
+  //     const data = message['data'];
+  //     newGraph(data['nodes'], data['edges']);
+  //   } else if (message['command'] == 'update') {
+  //     const data = message['data'];
+  //     updateGraph(data['nodes'], data['edges']);
+  //   } else if (message['command'] == 'clear') {
+  //     destroyGraph();
+  //     showHome();
+  //   }
+  // });
+
+
+  return (
+    <div className={cn(
+      "h-full w-full flex items-center justify-center bg-card text-foreground",
+      className
+    )}>
+
+      <div className="flex flex-col items-center gap-2">
+        {/* <Loader2 className="h-8 w-8 animate-spin text-primary" /> */}
+        <p style={{
+          // width: "100vw",
+          // height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "2em",
+          fontWeight: "bold",
+          color: "#f1982a"
+        }}>Jaclang Graph Visualizer</p>
+
+        <div ref={networkElement} id="mynetwork"></div>
+
       </div>
-    );
-  // }
 
-  // return (
-  //   <div className={cn("h-full w-full flex flex-col overflow-hidden bg-card", className)}>
-  //     <div className="flex-1 p-4 overflow-auto">
-  //       {/* Simple graph visualization */}
-  //       <div className="mb-4">
-  //         <h3 className="text-sm font-medium mb-2">Graph Visualization</h3>
-  //         <div className="border border-border rounded-md bg-muted/20 p-4 h-48 flex items-center justify-center">
-  //           {debugState.graph.nodes.length > 0 ? (
-  //             <div className="w-full h-full relative">
-  //               {/* Simple placeholder for graph visualization */}
-  //               <svg width="100%" height="100%" viewBox="0 0 400 200" className="text-foreground">
-  //                 {/* Nodes */}
-  //                 {debugState.graph.nodes.map((node, index) => {
-  //                   const x = 70 + (index * 80) % 300;
-  //                   const y = 60 + Math.floor((index * 80) / 300) * 80;
-                    
-  //                   return (
-  //                     <g key={node.id}>
-  //                       <circle 
-  //                         cx={x} 
-  //                         cy={y} 
-  //                         r="20" 
-  //                         className={node.type === 'agent' ? 'fill-primary/20 stroke-primary' : 'fill-secondary/20 stroke-secondary'}
-  //                         strokeWidth="2"
-  //                       />
-  //                       <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="text-xs fill-current">
-  //                         {node.label}
-  //                       </text>
-  //                     </g>
-  //                   );
-  //                 })}
-                  
-  //                 {/* Edges */}
-  //                 {debugState.graph.edges.map((edge, index) => {
-  //                   const sourceIndex = debugState.graph.nodes.findIndex(n => n.id === edge.source);
-  //                   const targetIndex = debugState.graph.nodes.findIndex(n => n.id === edge.target);
-                    
-  //                   if (sourceIndex === -1 || targetIndex === -1) return null;
-                    
-  //                   const sourceX = 70 + (sourceIndex * 80) % 300;
-  //                   const sourceY = 60 + Math.floor((sourceIndex * 80) / 300) * 80;
-  //                   const targetX = 70 + (targetIndex * 80) % 300;
-  //                   const targetY = 60 + Math.floor((targetIndex * 80) / 300) * 80;
-                    
-  //                   return (
-  //                     <g key={`edge-${index}`}>
-  //                       <line 
-  //                         x1={sourceX} 
-  //                         y1={sourceY} 
-  //                         x2={targetX} 
-  //                         y2={targetY} 
-  //                         className="stroke-muted-foreground" 
-  //                         strokeWidth="1.5"
-  //                         markerEnd="url(#arrowhead)"
-  //                       />
-  //                       {edge.label && (
-  //                         <text 
-  //                           x={(sourceX + targetX) / 2} 
-  //                           y={(sourceY + targetY) / 2 - 5}
-  //                           textAnchor="middle"
-  //                           className="text-[10px] fill-muted-foreground"
-  //                         >
-  //                           {edge.label}
-  //                         </text>
-  //                       )}
-  //                     </g>
-  //                   );
-  //                 })}
-                  
-  //                 <defs>
-  //                   <marker 
-  //                     id="arrowhead" 
-  //                     markerWidth="10" 
-  //                     markerHeight="7" 
-  //                     refX="9" 
-  //                     refY="3.5" 
-  //                     orient="auto"
-  //                   >
-  //                     <polygon points="0 0, 10 3.5, 0 7" className="fill-muted-foreground" />
-  //                   </marker>
-  //                 </defs>
-  //               </svg>
-  //             </div>
-  //           ) : (
-  //             <span className="text-sm text-muted-foreground">No graph data available</span>
-  //           )}
-  //         </div>
-  //       </div>
-        
-  //       {/* Current line */}
-  //       <div className="mb-4">
-  //         <h3 className="text-sm font-medium mb-2">Current Line</h3>
-  //         <div className="bg-muted/20 border border-border rounded-md px-3 py-2">
-  //           <span className="font-mono text-sm">Line {debugState.currentLine}</span>
-  //         </div>
-  //       </div>
-        
-  //       {/* Variables */}
-  //       <div className="mb-4">
-  //         <h3 className="text-sm font-medium mb-2">Variables</h3>
-  //         <div className="bg-muted/20 border border-border rounded-md p-3 max-h-40 overflow-y-auto">
-  //           {Object.keys(debugState.variables).length > 0 ? (
-  //             <div className="space-y-1">
-  //               {Object.entries(debugState.variables).map(([name, value]) => (
-  //                 <div key={name} className="flex items-start">
-  //                   <span className="font-mono text-sm font-medium text-primary min-w-20">{name}:</span>
-  //                   <span className="font-mono text-sm ml-2">{JSON.stringify(value)}</span>
-  //                 </div>
-  //               ))}
-  //             </div>
-  //           ) : (
-  //             <span className="text-sm text-muted-foreground">No variables defined</span>
-  //           )}
-  //         </div>
-  //       </div>
-        
-  //       {/* Call Stack */}
-  //       <div>
-  //         <h3 className="text-sm font-medium mb-2">Call Stack</h3>
-  //         <div className="bg-muted/20 border border-border rounded-md p-3 max-h-40 overflow-y-auto">
-  //           {debugState.callStack.length > 0 ? (
-  //             <div className="space-y-1">
-  //               {debugState.callStack.map((call, index) => (
-  //                 <div key={index} className="font-mono text-sm">
-  //                   {call}
-  //                 </div>
-  //               ))}
-  //             </div>
-  //           ) : (
-  //             <span className="text-sm text-muted-foreground">Call stack is empty</span>
-  //           )}
-  //         </div>
-  //       </div>
-  //     </div>
-    // </div>
-  // );
+
+    </div>
+  );
 }

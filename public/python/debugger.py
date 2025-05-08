@@ -26,22 +26,26 @@ class Debugger(bdb.Bdb):
 
     def user_line(self, frame):
         """Called when we stop or break at a line."""
-        self._send_graph()
+
         if self.curframe is None:
-            self.set_continue()
             self.curframe = frame
-        else:
+            self._send_graph()
+            self.set_continue()
+        elif (frame.f_code.co_filename == self.filepath):
+            self._send_graph()
             self.curframe = frame
             self.cb_break(self, frame.f_lineno)
+        else:
+            self.do_step_into()  # Just step till we reach the file again.
 
 
     def _send_graph(self) -> None:
         try:
             graph_str = self.runeval("dotgen(as_json=True)")
             self.cb_graph(graph_str)
-            self.set_trace()
         except Exception as e:
-            print(str(e), file=sys.stderr)
+            pass
+        self.set_trace()
 
     # -------------------------------------------------------------------------
     # Public API.

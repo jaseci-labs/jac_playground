@@ -25,7 +25,9 @@ onmessage = async (event) => {
       sharedInts = new Int32Array(data.sharedBuffer);
 
       importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js");
+      logMessage("Loading Pyodide...");
       pyodide = await loadPyodide();
+      logMessage("Pyodide loaded.");
       const success = await loadPyodideAndJacLang();
       logMessage(`Pyodide and JacLang loaded: success=${success}`);
       self.postMessage({ type: 'initialized', success: success });
@@ -128,7 +130,7 @@ async function checkJaclangLoaded(pyodide) {
 
 function callbackBreak(dbg, line) {
 
-  logMessage("before ui");
+  logMessage(`before ui: line=$${line}`);
   waitingForUi = true;
   self.postMessage({ type: 'breakHit', line: line });
 
