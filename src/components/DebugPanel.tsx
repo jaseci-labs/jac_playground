@@ -58,9 +58,9 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
     dataNodesRef.current = [];
     dataEdgesRef.current = [];
 
-    if (networkElement.current) {
-      networkElement.current.innerHTML = "";
-    }
+    // if (networkElement.current) {
+    //   networkElement.current.innerHTML = "";
+    // }
   }
 
 
@@ -157,6 +157,9 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   useEffect(() => {
     if (debugStatus) {
       destroyGraph();
+      if (networkRef.current) {
+        networkRef.current.destroy();
+      }
     } else if (graph && networkElement.current) {
       newGraph(graph["nodes"], graph["edges"]);
     }

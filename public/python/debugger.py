@@ -29,7 +29,6 @@ class Debugger(bdb.Bdb):
 
         if self.curframe is None:
             self.curframe = frame
-            self._send_graph()
             self.set_continue()
         elif (frame.f_code.co_filename == self.filepath):
             self._send_graph()
