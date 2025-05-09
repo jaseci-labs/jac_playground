@@ -67,9 +67,10 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   function updateGraph(newNodes: any[], newEdges: any[]) {
     hideHome();
 
-    if (networkRef.current === null) {
+    if (networkRef.current === null || nodesRef.current === null || edgesRef.current === null) {
       newGraph(newNodes, newEdges);
-    } else {
+    }
+    else {
       for (let node of newNodes) {
         if (!nodeExists(node)) {
           dataNodesRef.current.push(node);
@@ -156,10 +157,12 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   useEffect(() => {
     if (debugStatus) {
       destroyGraph();
+    } else if (graph && networkElement.current) {
+      newGraph(graph["nodes"], graph["edges"]);
     }
-  }, [debugStatus]);      
+  }, [debugStatus]);
 
-  
+
   return (
     <div
       className={cn(
