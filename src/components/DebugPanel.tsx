@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 interface DebugPanelProps {
   graph: JSON;
   className?: string;
@@ -90,9 +90,12 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
 
   }
 
-  if (networkElement.current && graph != null && Array.isArray(graph['nodes']) && Array.isArray(graph['edges'])) {
-    newGraph(graph['nodes'], graph['edges']);
-  }
+
+  useEffect(() => {
+    if (networkElement.current && graph != null && Array.isArray(graph['nodes']) && Array.isArray(graph['edges'])) {
+      newGraph(graph['nodes'], graph['edges']);
+    }
+  }, [graph]);
 
   // window.addEventListener('message', event => {
   //   const message = event.data;
@@ -125,7 +128,7 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
           color: "#f1982a"
         }}>Jaclang Graph Visualizer</p>
 
-        <div ref={networkElement} id="mynetwork"></div>
+        <div ref={networkElement} id="mynetwork" className="w-full h-[80vh] border border-gray-300"></div>
       </div>
     </div>
   );
