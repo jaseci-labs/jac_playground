@@ -1,40 +1,38 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
+
 interface DebugPanelProps {
   graph: JSON;
   className?: string;
+  debugStatus?: boolean;
 }
 
 declare var vis: any;
 
-export function DebugPanel({ graph, className }: DebugPanelProps) {
+export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   const networkElement = useRef<HTMLDivElement>(null);
   const [isGraphVisible, setGraphVisible] = useState(false);
 
-  let network = null;
-  let nodes = null;
-  let edges = null;
-
-  let data_nodes = [];
-  let data_edges = [];
+  const networkRef = useRef<any>(null);
+  const nodesRef = useRef<any>(null);
+  const edgesRef = useRef<any>(null);
+  const dataNodesRef = useRef<any[]>([]);
+  const dataEdgesRef = useRef<any[]>([]);
 
   function nodesEqual(node1: any, node2: any) {
     return node1.id === node2.id && node1.label === node2.label;
   }
+
   function edgesEqual(edge1: any, edge2: any) {
     return edge1.from === edge2.from && edge1.to === edge2.to;
   }
+
   function nodeExists(node: any) {
-    for (let n of data_nodes) {
-      if (nodesEqual(n, node)) return true;
-    }
-    return false;
+    return dataNodesRef.current.some(n => nodesEqual(n, node));
   }
+
   function edgeExists(edge: any) {
-    for (let e of data_edges) {
-      if (edgesEqual(e, edge)) return true;
-    }
-    return false;
+    return dataEdgesRef.current.some(e => edgesEqual(e, edge));
   }
 
   function hideHome() {
@@ -42,50 +40,126 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
   }
 
   function destroyGraph() {
-    if (network !== null) {
-      network.destroy();
-      network = null;
+    if (networkRef.current !== null) {
+      networkRef.current.destroy();
+      networkRef.current = null;
+    }
+
+    if (nodesRef.current) {
+      nodesRef.current.clear();
+      nodesRef.current = null;
+    }
+
+    if (edgesRef.current) {
+      edgesRef.current.clear();
+      edgesRef.current = null;
+    }
+
+    dataNodesRef.current = [];
+    dataEdgesRef.current = [];
+
+    if (networkElement.current) {
+      networkElement.current.innerHTML = "";
     }
   }
 
-  function newGraph(p_data_nodes, p_data_edges) {
+
+  function updateGraph(newNodes: any[], newEdges: any[]) {
+    hideHome();
+
+    if (networkRef.current === null) {
+      newGraph(newNodes, newEdges);
+    } else {
+      for (let node of newNodes) {
+        if (!nodeExists(node)) {
+          dataNodesRef.current.push(node);
+          nodesRef.current.add(node);
+        }
+      }
+
+      for (let edge of newEdges) {
+        if (!edgeExists(edge)) {
+          dataEdgesRef.current.push(edge);
+          edgesRef.current.add(edge);
+        }
+      }
+
+      networkRef.current.setOptions({
+        physics: {
+          enabled: true,
+          stabilization: {
+            enabled: false
+          },
+          barnesHut: {
+            gravitationalConstant: -2000,
+            centralGravity: 0.3,
+            springLength: 95,
+            springConstant: 0.04,
+            damping: 0.09
+          }
+        }
+      });
+
+      setTimeout(() => {
+        networkRef.current.setOptions({
+          physics: {
+            stabilization: {
+              enabled: true,
+              iterations: 100,
+              updateInterval: 25,
+              onlyDynamicEdges: false,
+              fit: true
+            }
+          }
+        });
+      }, 2000);
+    }
+  }
+
+  function newGraph(newNodes: any[], newEdges: any[]) {
     hideHome();
     destroyGraph();
 
-    nodes = new vis.DataSet(p_data_nodes);
-    edges = new vis.DataSet(p_data_edges);
+    dataNodesRef.current = [...newNodes];
+    dataEdgesRef.current = [...newEdges];
 
-    let container = networkElement.current;
-    let options = {};
-    let data = { nodes: nodes, edges: edges };
+    nodesRef.current = new vis.DataSet(newNodes);
+    edgesRef.current = new vis.DataSet(newEdges);
+
+    const container = networkElement.current;
+    const data = { nodes: nodesRef.current, edges: edgesRef.current };
+    const options = {
+      physics: {
+        enabled: true,
+        stabilization: {
+          iterations: 200,
+          updateInterval: 25,
+        },
+      },
+    };
 
     setTimeout(() => {
-      network = new vis.Network(container, data, options);
-      network.stabilize();
+      if (container) {
+        networkRef.current = new vis.Network(container, data, options);
+        networkRef.current.stabilize();
+      }
     }, 50);
   }
 
   useEffect(() => {
-    if (networkElement.current && graph != null && Array.isArray(graph['nodes']) && Array.isArray(graph['edges'])) {
-      newGraph(graph['nodes'], graph['edges']);
+    if (graph && networkElement.current) {
+      updateGraph(graph["nodes"], graph["edges"]);
     }
   }, [graph]);
 
-  // window.addEventListener('message', event => {
-  //   const message = event.data;
-  //   if (message['command'] == 'init') {
-  //     const data = message['data'];
-  //     newGraph(data['nodes'], data['edges']);
-  //   } else if (message['command'] == 'update') {
-  //     const data = message['data'];
-  //     updateGraph(data['nodes'], data['edges']);
-  //   } else if (message['command'] == 'clear') {
-  //     destroyGraph();
-  //     showHome();
-  //   }
-  // });
 
+  useEffect(() => {
+    if (debugStatus) {
+      destroyGraph();
+    }
+  }, [debugStatus]);      
 
+  
   return (
     <div
       className={cn(
@@ -94,14 +168,10 @@ export function DebugPanel({ graph, className }: DebugPanelProps) {
       )}
     >
       {!isGraphVisible && (
-        <p
-          id="home"
-          className="flex justify-center items-center text-[2em] font-bold text-[#f1982a]"
-        >
+        <p className="flex justify-center items-center text-[2em] font-bold text-[#f1982a]">
           Jaclang Graph Visualizer
         </p>
       )}
-
       <div
         ref={networkElement}
         id="mynetwork"

@@ -30,6 +30,7 @@ const Index = () => {
   const [pythonThread, setPythonThread] = useState(null);
   const [loaded, setloaded] = useState(false);
   const [isDebugging, setIsDebugging] = useState(false);
+  const [debugStatus, setDebugStatus] = useState("");
   const [graph, setGraph] = useState<JSON>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
@@ -47,21 +48,12 @@ const Index = () => {
   }, [loaded, pythonThread]);
 
 
-  // useEffect(() => {
-  //   if (loaded) {
-  //     console.log(loaded);
-  //     setTimeout(() => {
-  //       setloaded(false);
-  //     }, 1500);
-  //   }
-  // }, [loaded])
-
-
   const runJacCode = async () => {
     if (!loaded) return; // <-- This is not working, @Malitha work on this.
     if (!pythonThread.loaded) return;
 
     setOutput("");
+    setDebugStatus("running");
 
     // Assign all the callbacks --------------------------------------------
     pythonThread.callbackBreakHit = (line: number) => {
@@ -163,6 +155,7 @@ const Index = () => {
         break;
 
       case "restart":
+        setDebugStatus("restarting");
         console.log("Restart debugging");
         break;
 
@@ -170,6 +163,7 @@ const Index = () => {
         pythonThread.terminate();
         console.log("Stop debugging");
         setIsDebugging(false);
+        setDebugStatus("stopped");
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
@@ -253,6 +247,7 @@ const Index = () => {
                       <div className="flex-1">
                         <DebugPanel
                           graph={graph}
+                          debugStatus={isRunning}
                           className="h-full"
                         />
                       </div>
@@ -272,7 +267,6 @@ const Index = () => {
                   output={output}
                   outIsError={outIsError}
                   isLoading={isRunning}
-                  // isDebugging={isDebugging}
                   className="h-full"
                 />
               </ResizablePanel>
