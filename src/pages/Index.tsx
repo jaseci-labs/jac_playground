@@ -49,7 +49,7 @@ const Index = () => {
 
 
   const runJacCode = async () => {
-    if (!loaded) return; // <-- This is not working, @Malitha work on this.
+    if (!loaded) return;
     if (!pythonThread.loaded) return;
 
     setOutput("");
@@ -131,7 +131,6 @@ const Index = () => {
 
       // Toggles between debug and run mode.
       case "toggle":
-        // TODO: @Malitha check why this is not working.
         setIsDebugging(prev => {
           const newState = !prev;
           return newState;
