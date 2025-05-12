@@ -71,6 +71,7 @@ const Index = () => {
     }
     pythonThread.callbackExecEnd = () => {
       setIsRunning(false);
+      setIsPaused(false);
       codeEditorRef.current?.clearExecutionLine();
     }
 
@@ -86,6 +87,9 @@ const Index = () => {
     try {
       setIsRunning(true);
       pythonThread.startExecution(code);
+      if (isDebugging) {
+        setIsPaused(true);
+      }
     } catch (error) {
       console.error("Error running Jac code:", error);
       setOutput(`Error: ${error}`);
@@ -230,7 +234,7 @@ const Index = () => {
 
             <DebugControls
               isDebugging={isDebugging}
-              isPaused={true}
+              isPaused={isPaused}
               onDebugAction={handleDebugAction}
             />
 
