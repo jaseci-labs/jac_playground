@@ -1,17 +1,17 @@
 
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
-import { 
-  Play, 
-  SkipForward, 
-  ArrowDown, 
-  ArrowUp, 
-  RotateCw, 
-  Square, 
+import {
+  Play,
+  SkipForward,
+  ArrowDown,
+  ArrowUp,
+  RotateCw,
+  Square,
   ToggleRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -27,7 +27,7 @@ interface DebugControlsProps {
   className?: string;
 }
 
-export function DebugControls({ 
+export function DebugControls({
   isDebugging,
   isPaused,
   onDebugAction,
@@ -36,37 +36,26 @@ export function DebugControls({
   return (
     <TooltipProvider>
       <div className={cn(
-        "flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-card border-t border-border overflow-x-auto", 
+        "flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-card border-t border-border overflow-x-auto",
         className
       )}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Toggle 
-              pressed={isDebugging}
-              onPressedChange={() => onDebugAction("toggle")}
-              aria-label="Toggle debug mode"
-              className="gap-1"
-            >
-              <ToggleRight className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {!isDebugging ? "Debug Mode" : "Run Mode"}
-              </span>
-            </Toggle>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Debug Mode</p>
-          </TooltipContent>
-        </Tooltip>
-        
+        <label className="inline-flex items-center cursor-pointer p-2">
+          <input type="checkbox" value="" checked={isDebugging} onChange={() => onDebugAction("toggle")} className="sr-only peer" />
+          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+          <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+            {isDebugging ? "Debug Mode" : "Run Mode"}
+          </span>
+        </label>
+
         {isDebugging && (
           <>
             <div className="h-4 border-l border-border mx-1" />
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onDebugAction("continue")}
                   disabled={!isPaused}
                 >
@@ -77,12 +66,12 @@ export function DebugControls({
                 <p>Continue</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onDebugAction("stepOver")}
                   disabled={!isPaused}
                 >
@@ -93,12 +82,12 @@ export function DebugControls({
                 <p>Step Over</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onDebugAction("stepInto")}
                   disabled={!isPaused}
                 >
@@ -109,12 +98,12 @@ export function DebugControls({
                 <p>Step Into</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onDebugAction("stepOut")}
                   disabled={!isPaused}
                 >
@@ -125,12 +114,12 @@ export function DebugControls({
                 <p>Step Out</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onDebugAction("restart")}
                 >
                   <RotateCw className="h-4 w-4" />
@@ -140,12 +129,12 @@ export function DebugControls({
                 <p>Restart</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onDebugAction("stop")}
                   className="text-red-500 hover:text-red-600"
                 >

@@ -57,7 +57,9 @@ const Index = () => {
 
     // Assign all the callbacks --------------------------------------------
     pythonThread.callbackBreakHit = (line: number) => {
-      codeEditorRef.current?.highlightExecutionLine(line);
+      if (isDebugging) {
+        codeEditorRef.current?.highlightExecutionLine(line);
+      }
     }
     pythonThread.callbackStdout = (outputText: string) => {
       setOutput(prev => prev + outputText);
@@ -69,6 +71,7 @@ const Index = () => {
     }
     pythonThread.callbackExecEnd = () => {
       setIsRunning(false);
+      setIsPaused(false);
       codeEditorRef.current?.clearExecutionLine();
     }
 
@@ -84,6 +87,9 @@ const Index = () => {
     try {
       setIsRunning(true);
       pythonThread.startExecution(code);
+      if (isDebugging) {
+        setIsPaused(true);
+      }
     } catch (error) {
       console.error("Error running Jac code:", error);
       setOutput(`Error: ${error}`);
@@ -120,14 +126,17 @@ const Index = () => {
 
   useEffect(() => {
     if (pythonThread != null && pythonThread.loaded) {
-      pythonThread.setBreakpoints(breakpoints);
+      if (isDebugging) {
+        pythonThread.setBreakpoints(breakpoints);
+      } else {
+        pythonThread.setBreakpoints([]);
+      }
     }
-  }, [breakpoints, pythonThread]);
+  }, [breakpoints, pythonThread, isDebugging]);
 
 
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     switch (action) {
-
 
       // Toggles between debug and run mode.
       case "toggle":
@@ -225,7 +234,7 @@ const Index = () => {
 
             <DebugControls
               isDebugging={isDebugging}
-              isPaused={true}
+              isPaused={isPaused}
               onDebugAction={handleDebugAction}
             />
 

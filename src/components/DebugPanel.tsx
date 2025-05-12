@@ -57,10 +57,6 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
 
     dataNodesRef.current = [];
     dataEdgesRef.current = [];
-
-    // if (networkElement.current) {
-    //   networkElement.current.innerHTML = "";
-    // }
   }
 
 
@@ -182,7 +178,7 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
         ref={networkElement}
         id="mynetwork"
         className={cn(
-          "w-full h-[80vh] border border-gray-300",
+          "w-full h-[80vh]",
           isGraphVisible ? "block" : "hidden"
         )}
       ></div>
