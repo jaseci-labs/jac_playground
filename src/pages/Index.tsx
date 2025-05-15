@@ -1,9 +1,7 @@
-declare var loadPyodide: any;
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Play, RefreshCw, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CodeEditor } from "@/components/CodeEditor";
+import { CodeEditor, CodeEditorHandle } from "@/components/CodeEditor";
 import { OutputPanel } from "@/components/OutputPanel";
 import { ExamplesSidebar } from "@/components/ExamplesSidebar";
 import { ResizablePanel } from "@/components/ResizablePanel";
@@ -11,123 +9,83 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { defaultCode } from "@/lib/examples";
 import { useMobileDetect } from "@/hooks/useMobileDetect";
+import { DebugPanel } from "@/components/DebugPanel";
+import { DebugControls, DebugAction } from "@/components/DebugControls";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
 
+import {
+  PythonThread,
+} from "@/lib/pythonThread";
+import JacLoadingOverlay from "@/components/JacLoadingOverlay";
+
+
 const Index = () => {
+
   const [code, setCode] = useState(defaultCode);
   const [output, setOutput] = useState("");
+  const [outIsError, setOutIsError] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [pyodide, setPyodide] = useState(null);
+  const [pythonThread, setPythonThread] = useState(null);
   const [loaded, setloaded] = useState(false);
+  const [isDebugging, setIsDebugging] = useState(false);
+  const [debugStatus, setDebugStatus] = useState("");
+  const [graph, setGraph] = useState<JSON>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const isMobile = useMobileDetect();
   const { toast } = useToast();
-
+  const codeEditorRef = useRef<CodeEditorHandle>(null);
 
   useEffect(() => {
-    const loadPyodideAndJacLang = async () => {
-      try {
-        const pyodideInstance = await loadPyodide({
-          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.0/full/",
-          cache: true,
-        });
-
-        const response = await fetch("jaclang.zip");
-        const buffer = await response.arrayBuffer();
-        const data = new Uint8Array(buffer);
-
-        // Write the zip file to Pyodide's filesystem
-        await pyodideInstance.FS.writeFile("/jaclang.zip", data);
-
-        // Extract JacLang files
-        await pyodideInstance.runPythonAsync(`
-import shutil
-import zipfile
-import os
-
-with zipfile.ZipFile("/jaclang.zip", "r") as zip_ref:
-    zip_ref.extractall("/jaclang")
-
-os.sys.path.append("/jaclang")
-print("JacLang files loaded!")
-`);
-        // Check if JacLang is installed
-        try {
-          await pyodideInstance.runPythonAsync(`
-from jaclang.cli.cli import run
-print("JacLang is available!")
-          `);
-        } catch (validationError) {
-          console.error("JacLang is not available:", validationError);
-        }
-
-        setPyodide(pyodideInstance);
+    if (!pythonThread) {
+      setPythonThread(new PythonThread(() => {
+        console.log("[JsThread] Loaded callback invoked.");
         setloaded(true);
-      } catch (error) {
-        console.error('Error loading Pyodide or JacLang:', error);
-      } finally {
-      }
-    };
-
-    if (!pyodide) {
-      loadPyodideAndJacLang();
+      }));
     }
-  }, [pyodide]);
+  }, [loaded, pythonThread]);
 
-
-  useEffect(() => {
-    if (loaded) {
-      setTimeout(() => {
-        setloaded(false);
-      }, 1500);
-    }
-  }, [loaded])
 
   const runJacCode = async () => {
-    if (!pyodide) return;
-    setIsRunning(true);
-    setOutput('');
-    const safeCode = JSON.stringify(code);
+    if (!loaded) return;
+    if (!pythonThread.loaded) return;
+
+    setOutput("");
+    setDebugStatus("running");
+
+    // Assign all the callbacks --------------------------------------------
+    pythonThread.callbackBreakHit = (line: number) => {
+      codeEditorRef.current?.highlightExecutionLine(line);
+    }
+    pythonThread.callbackStdout = (outputText: string) => {
+      setOutput(prev => prev + outputText);
+      setOutIsError(false);
+    }
+    pythonThread.callbackStderr = (errorText: string) => {
+      setOutput(prev => prev + errorText);
+      setOutIsError(true);
+    }
+    pythonThread.callbackExecEnd = () => {
+      setIsRunning(false);
+      codeEditorRef.current?.clearExecutionLine();
+    }
+
+    let isNewGraph: boolean = true;
+    pythonThread.callbackJacGraph = (graph_str: string) => {
+      const graph = JSON.parse(graph_str);
+      console.log("JacGraph received:", graph);
+      setGraph(graph);
+      isNewGraph = false;
+    }
+    // Assign all the callbacks --------------------------------------------
 
     try {
-      await pyodide.runPythonAsync(`
-import os
-import sys
-
-jac_code = ${safeCode}
-with open("/tmp/temp.jac", "w") as f:
-    f.write(jac_code)
-
-# Backup actual file descriptors
-stdout_fd = sys.stdout.fileno()
-stderr_fd = sys.stderr.fileno()
-saved_stdout = os.dup(stdout_fd)
-saved_stderr = os.dup(stderr_fd)
-
-with open("/tmp/jac_output.log", "w") as log_file:
-    os.dup2(log_file.fileno(), stdout_fd)
-    os.dup2(log_file.fileno(), stderr_fd)
-
-    try:
-        run("/tmp/temp.jac")
-    except Exception:
-        import traceback
-        traceback.print_exc(file=log_file)
-
-os.dup2(saved_stdout, stdout_fd)
-os.dup2(saved_stderr, stderr_fd)
-os.close(saved_stdout)
-os.close(saved_stderr)
-      `);
-
-      // Now read the output log using Pyodide FS API
-      const outputBuffer = pyodide.FS.readFile("/tmp/jac_output.log");
-      const outputText = new TextDecoder().decode(outputBuffer);
-
-      setOutput(outputText || "No output");
-      setIsRunning(false);
+      setIsRunning(true);
+      pythonThread.startExecution(code);
     } catch (error) {
+      console.error("Error running Jac code:", error);
       setOutput(`Error: ${error}`);
     }
   };
@@ -156,10 +114,72 @@ os.close(saved_stderr)
     setShowMobileSidebar(!showMobileSidebar);
   };
 
+  const handleBreakpointsChange = (newBreakpoints: number[]) => {
+    setBreakpoints(newBreakpoints);
+  };
+
+  useEffect(() => {
+    if (pythonThread != null && pythonThread.loaded) {
+      pythonThread.setBreakpoints(breakpoints);
+    }
+  }, [breakpoints, pythonThread]);
+
+
+  const handleDebugAction = useCallback(async (action: DebugAction) => {
+    switch (action) {
+
+
+      // Toggles between debug and run mode.
+      case "toggle":
+        setIsDebugging(prev => {
+          const newState = !prev;
+          return newState;
+        });
+        break;
+
+      case "continue":
+        pythonThread.continueExecution();
+        break;
+
+      case "stepOver":
+        pythonThread.stepOver();
+        break;
+
+      case "stepInto":
+        pythonThread.stepInto();
+        break;
+
+      case "stepOut":
+        pythonThread.stepOut();
+        break;
+
+      case "restart":
+        setDebugStatus("restarting");
+        console.log("Restart debugging");
+        break;
+
+      case "stop":
+        pythonThread.terminate();
+        console.log("Stop debugging");
+        setIsDebugging(false);
+        setDebugStatus("stopped");
+        codeEditorRef.current?.clearExecutionLine();
+        break;
+    }
+  }, [isDebugging, breakpoints]);
+
+
+
+  if (!loaded) {
+    return (
+      <JacLoadingOverlay />
+    );
+  }
+
+
   return (
     <ThemeProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-background">
-        {/* Header */}
         <header className="h-14 border-b bg-card flex items-center justify-between px-4">
           <div className="flex items-center space-x-2">
             <img src={jacLogo} className="w-8 h-8 mr-2" />
@@ -181,9 +201,7 @@ os.close(saved_stderr)
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Main content */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Editor Toolbar */}
             <div className="h-12 border-b bg-card flex items-center justify-between px-4">
               <div className="flex items-center space-x-2">
                 <Button
@@ -192,7 +210,7 @@ os.close(saved_stderr)
                   className="space-x-1 bg-primary hover:bg-primary/90"
                 >
                   <Play className="h-4 w-4" />
-                  <span>Run</span>
+                  <span>{isDebugging ? "Debug" : "Run"}</span>
                 </Button>
                 <Button
                   variant="outline"
@@ -205,19 +223,38 @@ os.close(saved_stderr)
               </div>
             </div>
 
-            {/* Editor and output panels */}
+            <DebugControls
+              isDebugging={isDebugging}
+              isPaused={true}
+              onDebugAction={handleDebugAction}
+            />
+
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Editor Section */}
               <div className="flex-1 overflow-hidden">
-                <CodeEditor
-                  value={code}
-                  onChange={setCode}
-                  language="jac"
-                  className="h-full"
-                />
+                <div className="flex h-full">
+                  <div className={`${isDebugging ? 'w-1/2' : 'w-full'} border-r border-border`}>
+                    <CodeEditor
+                      ref={codeEditorRef}
+                      value={code}
+                      onChange={setCode}
+                      className="h-full"
+                      onBreakpointsChange={handleBreakpointsChange}
+                    />
+                  </div>
+                  {
+                    isDebugging && (
+                      <div className="flex-1">
+                        <DebugPanel
+                          graph={graph}
+                          debugStatus={isRunning}
+                          className="h-full"
+                        />
+                      </div>
+                    )
+                  }
+                </div>
               </div>
 
-              {/* Output Panel */}
               <ResizablePanel
                 direction="horizontal"
                 defaultSize={30}
@@ -227,6 +264,7 @@ os.close(saved_stderr)
               >
                 <OutputPanel
                   output={output}
+                  outIsError={outIsError}
                   isLoading={isRunning}
                   className="h-full"
                 />
@@ -234,7 +272,6 @@ os.close(saved_stderr)
             </div>
           </div>
 
-          {/* Sidebar - hidden on mobile until toggled */}
           {(showMobileSidebar || !isMobile) && (
             <ExamplesSidebar
               onSelectExample={handleSelectExample}

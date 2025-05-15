@@ -1,0 +1,27 @@
+.myBreakPoint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin-left: 15px;
+}
+
+.myBreakPoint::before {
+    content: '';
+    background-color: red;
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+}
+
+.current-line-highlight {
+    background-color: rgba(255, 255, 0, 0.3); /* yellow background */
+  }
+  
+  .current-line-arrow {
+    background: url('/arrow.png') no-repeat center center;
+    background-size: contain;
+    width: 16px;
+    height: 16px;
+  }
+  
