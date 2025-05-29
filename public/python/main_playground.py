@@ -1,9 +1,5 @@
 import io
-import os
-import sys
-
 import contextlib
-from collections.abc import Iterable
 
 # If these variables are not set by the pyodide this will raise an exception.
 SAFE_CODE = globals()["SAFE_CODE"]
@@ -41,8 +37,6 @@ with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
         code = \
         "from jaclang.cli.cli import run\n" \
         f"run('{JAC_PATH}')\n"
-        # Ensure printgraph is imported and available
-        exec("from jaclang.cli.cli import printgraph", globals())
         debugger.set_code(code=code, filepath=JAC_PATH)
         debugger.do_run()
 

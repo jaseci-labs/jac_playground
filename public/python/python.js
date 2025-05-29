@@ -194,10 +194,7 @@ function callbackBreak(dbg, line) {
         continueExecution = true;
         break;
     }
-
   }
-
-
   logMessage("after ui");
 }
 
@@ -206,11 +203,9 @@ function callbackStdout(output) {
   self.postMessage({ type: 'stdout', output: output });
 }
 
-
 function callbackStderr(output) {
   self.postMessage({ type: 'stderr', output: output });
 }
-
 
 function callbackGraph(graph) {
   self.postMessage({ type: 'jacGraph', graph: graph });

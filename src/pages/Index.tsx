@@ -64,6 +64,11 @@ const Index = () => {
       setOutIsError(false);
     }
     pythonThread.callbackStderr = (errorText: string) => {
+      if (
+        errorText.includes("[Errno 44] No such file or directory: '/lib/python312.zip/bdb.py'")
+      ) {
+        return;
+      }
       setOutput(prev => prev + errorText);
       setOutIsError(true);
     }

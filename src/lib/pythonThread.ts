@@ -125,11 +125,11 @@ export class PythonThread {
   // Internal methods.
   // ---------------------------------------------------------
 
-  logMessage(message) {
+  logMessage(message: any) {
     console.log("[JsThread] " + message);
   }
 
-  messageHandler(event) {
+  messageHandler(event: any) {
     const data = event.data;
 
     switch (data.type) {
