@@ -22,8 +22,9 @@ class JsIO(io.StringIO):
     def write(self, s: str, /) -> int:
         self.callback(s)
         super().write(s)
+        return 0
 
-    def writelines(self, lines: Iterable[str], /) -> None:
+    def writelines(self, lines, /) -> None:
         for line in lines:
             self.callback(line)
         super().writelines(lines)
@@ -40,6 +41,8 @@ with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
         code = \
         "from jaclang.cli.cli import run\n" \
         f"run('{JAC_PATH}')\n"
+        # Ensure printgraph is imported and available
+        exec("from jaclang.cli.cli import printgraph", globals())
         debugger.set_code(code=code, filepath=JAC_PATH)
         debugger.do_run()
 

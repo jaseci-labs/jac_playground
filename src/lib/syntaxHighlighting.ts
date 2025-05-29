@@ -11,7 +11,13 @@ export async function loadSyntax(monaco: any, editor: any, value: any) {
     console.warn("WASM already loaded or failed to load:", e);
   }
 
-  const response = await fetch("/jac.tmLanguage.json");
+  // const response = await fetch("../../../jac/support/vscode_ext/jac/syntaxes/jac.tmLanguage.json");
+  // const grammerConfigRes = await fetch("../../../jac/support/vscode_ext/jac/language-configuration.json");
+
+  // const response = await fetch("/playground/jac.tmLanguage.json");
+  // const grammerConfigRes = await fetch("/playground/language-configuration.json");
+
+  const response = await fetch("https://raw.githubusercontent.com/jaseci-labs/jaseci/main/jac/support/vscode_ext/jac/syntaxes/jac.tmLanguage.json");
   const grammerConfigRes = await fetch("/language-configuration.json");
   const jacGrammar = await response.json();
   const grammerConfig = await grammerConfigRes.json();

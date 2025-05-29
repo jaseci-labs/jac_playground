@@ -1,4 +1,4 @@
-from jaclang.runtimelib.builtin import dotgen
+from jaclang.runtimelib.builtin import printgraph
 from jaclang.runtimelib.machinestate import JacMachineState
 
 __jac_mach__ = JacMachineState()

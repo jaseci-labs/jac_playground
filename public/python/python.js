@@ -68,13 +68,15 @@ function logMessage(message) {
 
 
 async function readFileAsString(fileName) {
+  // const response = await fetch("/playground" + fileName);
   const response = await fetch(fileName);
   return await response.text();
 };
 
 
 async function readFileAsBytes(fileName) {
-  const response = await fetch("/jaclang.zip");
+  // const response = await fetch("/playground" + fileName);
+  const response = await fetch(fileName);
   const buffer = await response.arrayBuffer();
   return new Uint8Array(buffer);
 }
@@ -236,7 +238,7 @@ async function startExecution(safeCode) {
   // Run the main script
   logMessage("Execution started.");
   await pyodide.runPythonAsync(
-    await readFileAsString("/python/main.py")
+    await readFileAsString("/python/main_playground.py")
   );
   logMessage("Execution finished.");
   dbg = null;

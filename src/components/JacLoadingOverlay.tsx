@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import jacLogo from "/jaseci.png";
 
 const JacLoadingOverlay = () => {
     const [loadingText, setLoadingText] = useState('');
@@ -36,7 +37,7 @@ const JacLoadingOverlay = () => {
 
                 <div className="relative z-10 flex items-center justify-center h-24 w-24 rounded-full bg-gray-800 border-2 border-blue-500 shadow-lg overflow-hidden">
                     <img
-                        src="/jaseci.png"
+                        src={jacLogo}
                         alt="Jac Logo"
                         className="h-16 w-16 animate-spin-slow"
                     />
