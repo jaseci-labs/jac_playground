@@ -194,10 +194,7 @@ function callbackBreak(dbg, line) {
         continueExecution = true;
         break;
     }
-
   }
-
-
   logMessage("after ui");
 }
 
@@ -242,5 +239,4 @@ async function startExecution(safeCode) {
   );
   logMessage("Execution finished.");
   dbg = null;
-
 }

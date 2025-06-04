@@ -24,7 +24,6 @@ class Debugger(bdb.Bdb):
 
     def user_line(self, frame):
         """Called when we stop or break at a line."""
-
         if self.curframe is None:
             self.curframe = frame
             self.set_continue()
@@ -61,6 +60,7 @@ class Debugger(bdb.Bdb):
             self.set_break(self.filepath, lineno)
         self.breakpoint_buff.clear()
         self.run(self.code)
+        self._send_graph()
 
     def do_continue(self) -> None:
         self.set_continue()
