@@ -38,7 +38,7 @@ export function ExamplesSidebar({
 
         const loadedExamples = await Promise.all(
           Object.entries(files).map(async ([name, filename]) => {
-            const codeRes = await fetch(`/example/${filename}`);
+            const codeRes = await fetch(`/examples/${filename}`);
             if (!codeRes.ok) {
               console.error(`Failed to load ${filename}: ${codeRes.statusText}`);
               return null;
