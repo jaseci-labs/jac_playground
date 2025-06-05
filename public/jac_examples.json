@@ -1,0 +1,9 @@
+{
+  "Hello World": "hello_world.jac",
+  "Variables": "variables.jac",
+  "Conditional Statements": "conditional_statements.jac",
+  "Loops": "loops.jac",
+  "Abilities": "abilities.jac",
+  "Lists": "lists.jac",
+  "Data Spatial Programming": "data_spatial_programming.jac"
+}

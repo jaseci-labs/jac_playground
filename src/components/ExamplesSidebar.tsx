@@ -1,12 +1,10 @@
-
-import { useState } from "react";
-import { BookOpen, ChevronRight, Code, X, Layout, FolderOpen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronRight, Code, X, FolderOpen } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { exampleCodes } from "@/lib/examples";
 import { Badge } from "@/components/ui/badge";
 
 interface ExamplesSidebarProps {
@@ -16,6 +14,11 @@ interface ExamplesSidebarProps {
   onToggleMobile?: () => void;
 }
 
+interface Example {
+  name: string;
+  code: string;
+}
+
 export function ExamplesSidebar({
   onSelectExample,
   className,
@@ -23,6 +26,48 @@ export function ExamplesSidebar({
   onToggleMobile,
 }: ExamplesSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [examples, setExamples] = useState<Example[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchExamples() {
+      setLoading(true);
+      try {
+        const res = await fetch("/jac_examples.json");
+        const files: Record<string, string> = await res.json();
+
+        const loadedExamples = await Promise.all(
+          Object.entries(files).map(async ([name, filename]) => {
+            const codeRes = await fetch(`/example/${filename}`);
+            if (!codeRes.ok) {
+              console.error(`Failed to load ${filename}: ${codeRes.statusText}`);
+              return null;
+            }
+            const contentType = codeRes.headers.get("content-type");
+            const code = await codeRes.text();
+            // Check for HTML fallback (file not found)
+            if (
+              (contentType && contentType.includes("text/html")) ||
+              code.trim().startsWith("<!DOCTYPE html") ||
+              code.trim().startsWith("<html")
+            ) {
+              console.error(`File not found or invalid: ${filename}`);
+              return null;
+            }
+            return {
+              name,
+              code,
+            };
+          })
+        );
+        setExamples(loadedExamples.filter(Boolean));
+      } catch (e) {
+        setExamples([]);
+      }
+      setLoading(false);
+    }
+    fetchExamples();
+  }, []);
 
   const toggleSidebar = () => {
     if (isMobile && onToggleMobile) {
@@ -77,26 +122,30 @@ export function ExamplesSidebar({
           </div>
           <ScrollArea className="flex-1 px-2">
             <div className="space-y-2 p-2">
-              {exampleCodes.map((example, index) => (
-                <div 
-                  key={index}
-                  onClick={() => onSelectExample(example.code)}
-                  className="group cursor-pointer rounded-md border bg-card hover:bg-accent/10 transition-colors duration-200 p-3"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Code className="h-4 w-4 text-primary" />
-                      <p className="text-sm font-medium">{example.name}</p>
+              {loading ? (
+                <div className="text-xs text-muted-foreground">Loading examples...</div>
+              ) : (
+                examples.map((example, index) => (
+                  <div 
+                    key={index}
+                    onClick={() => onSelectExample(example.code)}
+                    className="group cursor-pointer rounded-md border bg-card hover:bg-accent/10 transition-colors duration-200 p-3"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Code className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium">{example.name}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs bg-primary/10">
+                        Example
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-xs bg-primary/10">
-                      Example
-                    </Badge>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {example.code.slice(0, 100)}...
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {example.code.slice(0, 100)}...
-                  </p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </ScrollArea>
           <div className="p-4 flex justify-between items-center border-t">
