@@ -1,9 +1,19 @@
 {
-  "Hello World": "hello_world.jac",
-  "Variables": "variables.jac",
-  "Conditional Statements": "conditional_statements.jac",
-  "Loops": "loops.jac",
-  "Abilities": "abilities.jac",
-  "Lists": "lists.jac",
-  "Data Spatial Programming": "data_spatial_programming.jac"
+  "Basics": {
+    "Variables": "variables.jac",
+    "Loops": {
+      "Loops 1": {
+        "Loops 2": {
+          "Loops 3": {
+            "Loops 4": {
+              "Loops are fun and easy to understand": {
+                "Loops 6": "loops.jac"
+              }
+            }
+          }
+        }
+      } 
+    }
+  },
+  "Advanced": {}
 }
