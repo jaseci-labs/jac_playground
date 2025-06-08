@@ -1,3 +1,4 @@
+import { PYTHON_WORKER_PATH } from "./assetPaths";
 
 /**
  *   Shared ints layout (communication protocol):
@@ -39,7 +40,7 @@ export class PythonThread {
     const sharedBuffer = new SharedArrayBuffer(4 * SHARED_INT_SIZE); // 4 bytes for one Int32
     this.sharedInts = new Int32Array(sharedBuffer);
 
-    this.pythonThread = new Worker('/python/python.js');
+    this.pythonThread = new Worker(PYTHON_WORKER_PATH);
 
     this.callbackLoaded = loadedCallback;
     this.pythonThread.onmessage = this.messageHandler.bind(this);

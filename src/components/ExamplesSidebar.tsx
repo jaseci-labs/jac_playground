@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { JAC_EXAMPLES_JSON_PATH } from "@/lib/assetPaths";
 
 interface ExamplesSidebarProps {
   onSelectExample: (code: string) => void;
@@ -33,7 +34,7 @@ export function ExamplesSidebar({
     async function fetchExamples() {
       setLoading(true);
       try {
-        const res = await fetch("/jac_examples.json");
+        const res = await fetch(JAC_EXAMPLES_JSON_PATH);
         const files: Record<string, string> = await res.json();
 
         const loadedExamples = await Promise.all(
