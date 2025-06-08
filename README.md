@@ -13,7 +13,7 @@ Jac Playground is a web-based sandbox environment that allows developers to writ
 
 Start coding in Jac right away:
 
-➡ **<a href="https://jac-playground.vercel.app/" target="_blank" rel="noopener noreferrer">Jac Playground - Live Demo</a>.**
+➡ **<a href="https://www.jac-lang.org/playground/" target="_blank" rel="noopener noreferrer">Jac Playground - Live Demo</a>.**
 
 ## Interface
 
