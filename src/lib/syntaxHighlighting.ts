@@ -1,3 +1,5 @@
+import { ONIGASM_WASM_PATH, LANGUAGE_CONFIG_PATH } from "./assetPaths";
+
 export async function loadSyntax(monaco: any, editor: any, value: any) {
   const { loadWASM } = await import("onigasm");
   const { Registry } = await import("monaco-textmate");
@@ -6,19 +8,13 @@ export async function loadSyntax(monaco: any, editor: any, value: any) {
   monaco.languages.register({ id: "jac" });
 
   try {
-    await loadWASM("/onigasm.wasm");
+    await loadWASM(ONIGASM_WASM_PATH);
   } catch (e) {
     console.warn("WASM already loaded or failed to load:", e);
   }
 
-  // const response = await fetch("../../../jac/support/vscode_ext/jac/syntaxes/jac.tmLanguage.json");
-  // const grammerConfigRes = await fetch("../../../jac/support/vscode_ext/jac/language-configuration.json");
-
-  // const response = await fetch("/playground/jac.tmLanguage.json");
-  // const grammerConfigRes = await fetch("/playground/language-configuration.json");
-
   const response = await fetch("https://raw.githubusercontent.com/jaseci-labs/jaseci/main/jac/support/vscode_ext/jac/syntaxes/jac.tmLanguage.json");
-  const grammerConfigRes = await fetch("/language-configuration.json");
+  const grammerConfigRes = await fetch(LANGUAGE_CONFIG_PATH);
   const jacGrammar = await response.json();
   const grammerConfig = await grammerConfigRes.json();
 

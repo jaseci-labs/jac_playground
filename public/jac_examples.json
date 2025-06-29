@@ -1,0 +1,19 @@
+{
+  "Basics": {
+    "Variables": "variables.jac",
+    "Loops": {
+      "Loops 1": {
+        "Loops 2": {
+          "Loops 3": {
+            "Loops 4": {
+              "Loops are fun and easy to understand": {
+                "Loops 6": "loops.jac"
+              }
+            }
+          }
+        }
+      } 
+    }
+  },
+  "Advanced": {}
+}

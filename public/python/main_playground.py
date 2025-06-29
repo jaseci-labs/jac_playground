@@ -1,9 +1,5 @@
 import io
-import os
-import sys
-
 import contextlib
-from collections.abc import Iterable
 
 # If these variables are not set by the pyodide this will raise an exception.
 SAFE_CODE = globals()["SAFE_CODE"]
