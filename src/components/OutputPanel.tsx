@@ -41,7 +41,12 @@ export function OutputPanel({
               outIsError ? "text-red-400" : "text-white-500"
               )}
             >
-              {output || "// Output will appear here after running code"}
+              {output
+                ? output
+                    .split(/<==START PRINT GRAPH==>[\s\S]*?<==END PRINT GRAPH==>/g)
+                    .join("")
+                    .trim() || "// Output will appear here after running code"
+                : "// Output will appear here after running code"}
             </pre>
       </div>
     </div>
