@@ -2,7 +2,6 @@
 // ----------------------------------------------------------------------------
 // Globals
 // ----------------------------------------------------------------------------
-
 var pyodide = null;
 var breakpoints_buff = [];
 var dbg = null;  // The debugger instance.
@@ -13,14 +12,13 @@ var continueExecution = false;
 
 // const PLAYGROUND_PATH = "/playground";
 const PLAYGROUND_PATH = "";
-
 const JAC_PATH = "/tmp/main.jac";
 const LOG_PATH = "/tmp/logs.log";
+
 
 // ----------------------------------------------------------------------------
 // Message passing protocol
 // ----------------------------------------------------------------------------
-
 onmessage = async (event) => {
   const data = event.data;
   switch (data.type) {
@@ -62,10 +60,10 @@ onmessage = async (event) => {
 
 };
 
+
 // ----------------------------------------------------------------------------
 // Utility functions
 // ----------------------------------------------------------------------------
-
 function logMessage(message) {
   console.log("[PythonThread] " + message);
 }
@@ -76,7 +74,6 @@ async function readFileAsString(fileName) {
   // const response = await fetch(fileName);
   return await response.text();
 };
-
 
 async function readFileAsBytes(fileName) {
   const response = await fetch(PLAYGROUND_PATH + fileName);
@@ -89,7 +86,6 @@ async function readFileAsBytes(fileName) {
 // ----------------------------------------------------------------------------
 // Jaclang Initialization
 // ----------------------------------------------------------------------------
-
 async function loadPyodideAndJacLang() {
   try {
     await loadPythonResources(pyodide);
@@ -107,7 +103,6 @@ async function loadPyodideAndJacLang() {
   }
 }
 
-
 async function loadPythonResources(pyodide) {
   const data = await readFileAsBytes("/jaclang.zip");
   await pyodide.FS.writeFile("/jaclang.zip", data);
@@ -115,7 +110,6 @@ async function loadPythonResources(pyodide) {
     await readFileAsString("/python/extract_jaclang.py")
   );
 }
-
 
 async function checkJaclangLoaded(pyodide) {
   try {
@@ -132,8 +126,6 @@ async function checkJaclangLoaded(pyodide) {
 // ----------------------------------------------------------------------------
 // Execution
 // ----------------------------------------------------------------------------
-
-
 function callbackBreak(dbg, line) {
 
   logMessage(`before ui: line=$${line}`);
@@ -217,24 +209,19 @@ function callbackBreak(dbg, line) {
   logMessage("after ui");
 }
 
-
 function callbackStdout(output) {
   self.postMessage({ type: 'stdout', output: output });
 }
-
 
 function callbackStderr(output) {
   self.postMessage({ type: 'stderr', output: output });
 }
 
-
 function callbackGraph(graph) {
   self.postMessage({ type: 'jacGraph', graph: graph });
 }
 
-
 async function startExecution(safeCode) {
-
   pyodide.globals.set('SAFE_CODE', safeCode);
   pyodide.globals.set('JAC_PATH', JAC_PATH);
   pyodide.globals.set('CB_STDOUT', callbackStdout);
