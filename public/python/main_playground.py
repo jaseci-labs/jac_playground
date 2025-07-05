@@ -1,5 +1,6 @@
 import io
 import contextlib
+import bdb
 
 # If these variables are not set by the pyodide this will raise an exception.
 SAFE_CODE = globals()["SAFE_CODE"]
@@ -29,6 +30,14 @@ class JsIO(io.StringIO):
 with open(JAC_PATH, "w") as f:
     f.write(SAFE_CODE)
 
+# Import our custom exception for better error handling
+try:
+    exec("from debugger import DebuggerTerminated", globals())
+except:
+    # Fallback if import fails
+    class DebuggerTerminated(Exception):
+        pass
+
 
 with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
         contextlib.redirect_stderr(JsIO(CB_STDERR)):
@@ -42,6 +51,19 @@ with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
         debugger.set_code(code=code, filepath=JAC_PATH)
         debugger.do_run()
 
-    except Exception:
-        import traceback
-        traceback.print_exc()
+    except DebuggerTerminated:
+        # Handle our custom termination exception
+        print("Debug session ended by user.")
+    except SystemExit:
+        # Handle clean debugger termination
+        print("Execution stopped by user.")
+    except Exception as e:
+        # Check for other termination-related errors
+        if "terminated" in str(e).lower():
+            print("Execution terminated by user.")
+        elif "not a directory" in str(e).lower() or "no such file" in str(e).lower():
+            # Handle the specific bdb.py errors that occur in Pyodide
+            print("Debug session ended.")
+        else:
+            import traceback
+            traceback.print_exc()

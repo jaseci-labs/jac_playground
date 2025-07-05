@@ -3,6 +3,11 @@ import time
 from typing import Callable
 
 
+class DebuggerTerminated(Exception):
+    """Custom exception for clean debugger termination"""
+    pass
+
+
 class Debugger(bdb.Bdb):
 
     def __init__(self):
@@ -11,6 +16,7 @@ class Debugger(bdb.Bdb):
         self.code: str = ""
         self.curframe = None
         self.breakpoint_buff = []
+        self._terminated = False  # Add termination flag
 
         self.cb_break: Callable[[Debugger, int], None] = lambda dbg, lineno: None
         self.cb_graph: Callable[[str], None] = lambda graph: None
@@ -23,6 +29,11 @@ class Debugger(bdb.Bdb):
 
     def user_line(self, frame):
         """Called when we stop or break at a line."""
+        # Check if terminated
+        if self._terminated:
+            # Raise exception to break out of execution cleanly
+            raise DebuggerTerminated("Execution terminated by user")
+            
         if self.curframe is None:
             self.curframe = frame
             self.set_continue()
@@ -32,6 +43,24 @@ class Debugger(bdb.Bdb):
             self.cb_break(self, frame.f_lineno)
         else:
             self.do_step_into()  # Just step till we reach the file again.
+
+    def user_call(self, frame, args):
+        """Called when entering a function."""
+        if self._terminated:
+            raise DebuggerTerminated("Execution terminated by user")
+        super().user_call(frame, args)
+
+    def user_return(self, frame, retval):
+        """Called when returning from a function."""
+        if self._terminated:
+            raise DebuggerTerminated("Execution terminated by user")
+        super().user_return(frame, retval)
+
+    def user_exception(self, frame, exc_stuff):
+        """Called when an exception occurs."""
+        if self._terminated:
+            raise DebuggerTerminated("Execution terminated by user")
+        super().user_exception(frame, exc_stuff)
 
     def _send_graph(self) -> None:
         try:
@@ -75,4 +104,21 @@ class Debugger(bdb.Bdb):
         self.set_return(self.curframe)
 
     def do_terminate(self) -> None:
-        self.set_quit()
+        # Set termination flag first
+        self._terminated = True
+        
+        # Instead of calling set_quit() which fails in Pyodide,
+        # we'll use a more direct approach to stop execution
+        try:
+            # Clear all breakpoints first
+            self.clear_all_breaks()
+            # Force the debugger to stop by clearing the frame
+            self.curframe = None
+            # Use set_step() with immediate return to exit cleanly
+            self.set_step()
+        except Exception as e:
+            # If even basic operations fail, just set the flag and return
+            print(f"Debug termination handled: {e}")
+        
+        # Always raise our custom exception to signal clean termination
+        raise DebuggerTerminated("Debugger terminated by user")

@@ -41,7 +41,6 @@ export class PythonThread {
     this.sharedInts = new Int32Array(sharedBuffer);
 
     this.pythonThread = new Worker(PYTHON_WORKER_PATH);
-
     this.callbackLoaded = loadedCallback;
     this.pythonThread.onmessage = this.messageHandler.bind(this);
     this.pythonThread.postMessage({ type: 'initialize', sharedBuffer: sharedBuffer });
