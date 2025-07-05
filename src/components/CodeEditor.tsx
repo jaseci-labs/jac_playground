@@ -10,6 +10,8 @@ interface CodeEditorProps {
   onChange: (value: string) => void;
   className?: string;
   onBreakpointsChange?: (breakpoints: number[]) => void;
+  onRunCode?: () => void; // Callback for Ctrl+Enter
+  onToggleDebug?: () => void; // Callback for F5
 }
 
 export interface CodeEditorHandle {
@@ -18,7 +20,7 @@ export interface CodeEditorHandle {
 }
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
-  ({ value, onChange, className, onBreakpointsChange }, ref) => {
+  ({ value, onChange, className, onBreakpointsChange, onRunCode, onToggleDebug }, ref) => {
     const editorRef = useRef<any>(null);
     const breakpointsRef = useRef<Set<number>>(new Set());
     const decorationsCollectionRef = useRef<any>(null);
@@ -95,7 +97,39 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           }
         }
       });
-    }, [registerJacLanguage]);
+
+      // Add keyboard shortcuts
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+        onRunCode?.();
+      });
+
+      editor.addCommand(monaco.KeyCode.F5, () => {
+        onToggleDebug?.();
+      });
+
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.F5, () => {
+        onRunCode?.();
+      });
+
+      // Add context menu actions
+      editor.addAction({
+        id: 'run-code',
+        label: 'Run Code (Ctrl+Enter)',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+        contextMenuGroupId: '1_modification',
+        contextMenuOrder: 1,
+        run: () => onRunCode?.()
+      });
+
+      editor.addAction({
+        id: 'toggle-debug',
+        label: 'Toggle Debug Mode (F5)',
+        keybindings: [monaco.KeyCode.F5],
+        contextMenuGroupId: '2_debug',
+        contextMenuOrder: 1,
+        run: () => onToggleDebug?.()
+      });
+    }, [registerJacLanguage, onRunCode, onToggleDebug]);
 
 
     useImperativeHandle(ref, () => ({

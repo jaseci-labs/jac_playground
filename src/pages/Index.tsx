@@ -11,6 +11,7 @@ import { defaultCode } from "@/lib/examples";
 import { useMobileDetect } from "@/hooks/useMobileDetect";
 import { DebugPanel } from "@/components/DebugPanel";
 import { DebugControls, DebugAction } from "@/components/DebugControls";
+import { HelpDialog } from "@/components/HelpDialog";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
 
@@ -154,8 +155,105 @@ const Index = () => {
         break;
 
       case "restart":
+        if (!pythonThread || !pythonThread.loaded || !loaded) {
+          toast({
+            title: "Cannot Restart",
+            description: "Python environment is not ready yet. Please wait for initialization to complete.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (!code.trim()) {
+          toast({
+            title: "Cannot Restart",
+            description: "No code to execute. Please write some Jac code first.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         setDebugStatus("restarting");
         console.log("Restart debugging");
+        
+        // Show user feedback
+        toast({
+          title: "Restarting Execution",
+          description: "Stopping current execution and restarting...",
+        });
+          
+          // First terminate current execution
+          if (isRunning) {
+            pythonThread.terminate();
+          }
+          
+          // Clear execution state
+          codeEditorRef.current?.clearExecutionLine();
+          setOutput("");
+          setOutIsError(false);
+          setIsRunning(false); // Ensure running state is reset
+          
+          // Set a flag to restart after cleanup
+          setTimeout(async () => {
+            if (!pythonThread || !pythonThread.loaded) {
+              toast({
+                title: "Restart Failed",
+                description: "Python environment is no longer available.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
+            setDebugStatus("running");
+            
+            // Restore breakpoints for the new execution
+            if (pythonThread && breakpoints.length > 0) {
+              pythonThread.setBreakpoints(breakpoints);
+            }
+            
+            // Restart execution with the same logic as runJacCode
+            pythonThread.callbackBreakHit = (line: number) => {
+              codeEditorRef.current?.highlightExecutionLine(line);
+            }
+            pythonThread.callbackStdout = (outputText: string) => {
+              setOutput(prev => prev + outputText);
+              setOutIsError(false);
+            }
+            pythonThread.callbackStderr = (errorText: string) => {
+              setOutput(prev => prev + errorText);
+              setOutIsError(true);
+            }
+            pythonThread.callbackExecEnd = () => {
+              setIsRunning(false);
+              codeEditorRef.current?.clearExecutionLine();
+            }
+            
+            let isNewGraph: boolean = true;
+            pythonThread.callbackJacGraph = (graph_str: string) => {
+              const graph = JSON.parse(graph_str);
+              console.log("JacGraph received:", graph);
+              setGraph(graph);
+              isNewGraph = false;
+            }
+            
+            try {
+              setIsRunning(true);
+              pythonThread.startExecution(code);
+              
+              toast({
+                title: "Execution Restarted",
+                description: "Code execution has been restarted successfully.",
+              });
+            } catch (error) {
+              console.error("Error restarting Jac code:", error);
+              setOutput(`Error: ${error}`);
+              toast({
+                title: "Restart Failed",
+                description: `Failed to restart execution: ${error}`,
+                variant: "destructive",
+              });
+            }
+          }, 100);
         break;
 
       case "stop":
@@ -166,7 +264,7 @@ const Index = () => {
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
-  }, [isDebugging, breakpoints]);
+  }, [isDebugging, breakpoints, pythonThread, loaded, isRunning, code, toast]);
 
 
 
@@ -196,6 +294,7 @@ const Index = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             )}
+            <HelpDialog />
             <ThemeToggle />
           </div>
         </header>
@@ -206,7 +305,7 @@ const Index = () => {
               <div className="flex items-center space-x-2">
                 <Button
                   onClick={runJacCode}
-                  disabled={isRunning}
+                  disabled={isRunning || !loaded}
                   className="space-x-1 bg-primary hover:bg-primary/90"
                 >
                   <Play className="h-4 w-4" />
@@ -220,6 +319,14 @@ const Index = () => {
                   <RefreshCw className="h-4 w-4" />
                   <span>Reset</span>
                 </Button>
+                
+                {/* Environment Status Indicator */}
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className={`w-2 h-2 rounded-full ${loaded ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+                  <span className="text-muted-foreground">
+                    {loaded ? 'Environment Ready' : 'Loading Environment...'}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -239,6 +346,8 @@ const Index = () => {
                       onChange={setCode}
                       className="h-full"
                       onBreakpointsChange={handleBreakpointsChange}
+                      onRunCode={runJacCode}
+                      onToggleDebug={() => handleDebugAction("toggle")}
                     />
                   </div>
                   {
