@@ -25,7 +25,6 @@ onmessage = async (event) => {
 
     case 'initialize':
       sharedInts = new Int32Array(data.sharedBuffer);
-
       importScripts("https://cdn.jsdelivr.net/pyodide/v0.28.0/full/pyodide.js");
       logMessage("Loading Pyodide...");
       pyodide = await loadPyodide();
@@ -67,7 +66,6 @@ onmessage = async (event) => {
 function logMessage(message) {
   console.log("[PythonThread] " + message);
 }
-
 
 async function readFileAsString(fileName) {
   const response = await fetch(PLAYGROUND_PATH + fileName);

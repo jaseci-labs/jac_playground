@@ -7,7 +7,6 @@ SAFE_CODE = globals()["SAFE_CODE"]
 JAC_PATH  = globals()["JAC_PATH"]
 CB_STDOUT = globals()["CB_STDOUT"]
 CB_STDERR = globals()["CB_STDERR"]
-
 debugger  = globals()["debugger"]
 
 # Redirect stdout and stderr to javascript callback.

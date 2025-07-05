@@ -36,7 +36,6 @@ export class PythonThread {
   callbackJacGraph: (graph: string) => void;
 
   constructor(loadedCallback: () => void) {
-
     const sharedBuffer = new SharedArrayBuffer(4 * SHARED_INT_SIZE); // 4 bytes for one Int32
     this.sharedInts = new Int32Array(sharedBuffer);
 
