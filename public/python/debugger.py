@@ -1,4 +1,5 @@
 import bdb
+import json
 import time
 from typing import Callable
 
@@ -7,6 +8,30 @@ class DebuggerTerminated(Exception):
     """Custom exception for clean debugger termination"""
     pass
 
+
+def deduplicate_graph_json(graph_json_str):
+    graph = json.loads(graph_json_str)
+
+    # Deduplicate nodes by 'id'
+    seen_node_ids = set()
+    unique_nodes = []
+    for node in graph.get("nodes", []):
+        if node["id"] not in seen_node_ids:
+            seen_node_ids.add(node["id"])
+            unique_nodes.append(node)
+    graph["nodes"] = unique_nodes
+
+    # Deduplicate edges by (from, to) tuple
+    seen_edges = set()
+    unique_edges = []
+    for edge in graph.get("edges", []):
+        edge_key = (edge["from"], edge["to"])
+        if edge_key not in seen_edges:
+            seen_edges.add(edge_key)
+            unique_edges.append(edge)
+    graph["edges"] = unique_edges
+
+    return json.dumps(graph)
 
 class Debugger(bdb.Bdb):
 
@@ -65,7 +90,7 @@ class Debugger(bdb.Bdb):
     def _send_graph(self) -> None:
         try:
             graph_str = self.runeval("printgraph(format='json')")
-            self.cb_graph(graph_str)
+            self.cb_graph(deduplicate_graph_json(graph_str))
         except Exception as e:
             pass
         self.set_trace()
