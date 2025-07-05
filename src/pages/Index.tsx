@@ -80,8 +80,8 @@ const Index = () => {
       setGraph(graph);
       isNewGraph = false;
     }
+    
     // Assign all the callbacks --------------------------------------------
-
     try {
       setIsRunning(true);
       pythonThread.startExecution(code);
@@ -175,91 +175,26 @@ const Index = () => {
         
         setDebugStatus("restarting");
         console.log("Restart debugging");
-        
-        // Show user feedback
         toast({
           title: "Restarting Execution",
           description: "Stopping current execution and restarting...",
         });
-          
-          // First terminate current execution
-          if (isRunning) {
-            pythonThread.terminate();
-          }
-          
-          // Clear execution state
-          codeEditorRef.current?.clearExecutionLine();
-          setOutput("");
-          setOutIsError(false);
-          setIsRunning(false); // Ensure running state is reset
-          
-          // Set a flag to restart after cleanup
-          setTimeout(async () => {
-            if (!pythonThread || !pythonThread.loaded) {
-              toast({
-                title: "Restart Failed",
-                description: "Python environment is no longer available.",
-                variant: "destructive",
-              });
-              return;
-            }
-            
-            setDebugStatus("running");
-            
-            // Restore breakpoints for the new execution
-            if (pythonThread && breakpoints.length > 0) {
-              pythonThread.setBreakpoints(breakpoints);
-            }
-            
-            // Restart execution with the same logic as runJacCode
-            pythonThread.callbackBreakHit = (line: number) => {
-              codeEditorRef.current?.highlightExecutionLine(line);
-            }
-            pythonThread.callbackStdout = (outputText: string) => {
-              setOutput(prev => prev + outputText);
-              setOutIsError(false);
-            }
-            pythonThread.callbackStderr = (errorText: string) => {
-              setOutput(prev => prev + errorText);
-              setOutIsError(true);
-            }
-            pythonThread.callbackExecEnd = () => {
-              setIsRunning(false);
-              codeEditorRef.current?.clearExecutionLine();
-            }
-            
-            let isNewGraph: boolean = true;
-            pythonThread.callbackJacGraph = (graph_str: string) => {
-              const graph = JSON.parse(graph_str);
-              console.log("JacGraph received:", graph);
-              setGraph(graph);
-              isNewGraph = false;
-            }
-            
-            try {
-              setIsRunning(true);
-              pythonThread.startExecution(code);
-              
-              toast({
-                title: "Execution Restarted",
-                description: "Code execution has been restarted successfully.",
-              });
-            } catch (error) {
-              console.error("Error restarting Jac code:", error);
-              setOutput(`Error: ${error}`);
-              toast({
-                title: "Restart Failed",
-                description: `Failed to restart execution: ${error}`,
-                variant: "destructive",
-              });
-            }
-          }, 100);
+        
+        codeEditorRef.current?.clearExecutionLine();
+        
+        if (isRunning) {
+          pythonThread.terminate();
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        setOutput("");
+        setOutIsError(false);
+        pythonThread.startExecution(code);
+        setIsRunning(true);
         break;
 
       case "stop":
         pythonThread.terminate();
         console.log("Stop debugging");
-        setIsDebugging(false);
         setDebugStatus("stopped");
         codeEditorRef.current?.clearExecutionLine();
         break;
@@ -273,7 +208,6 @@ const Index = () => {
       <JacLoadingOverlay />
     );
   }
-
 
   return (
     <ThemeProvider>
