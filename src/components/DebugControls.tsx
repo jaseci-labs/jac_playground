@@ -39,29 +39,8 @@ export function DebugControls({
         "flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-card border-t border-border overflow-x-auto", 
         className
       )}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Toggle 
-              pressed={isDebugging}
-              onPressedChange={() => onDebugAction("toggle")}
-              aria-label="Toggle debug mode"
-              className="gap-1"
-            >
-              <ToggleRight className="h-4 w-4" />
-              <span className="hidden sm:inline">
-                {!isDebugging ? "Debug Mode" : "Run Mode"}
-              </span>
-            </Toggle>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Debug Mode</p>
-          </TooltipContent>
-        </Tooltip>
-        
         {isDebugging && (
           <>
-            <div className="h-4 border-l border-border mx-1" />
-            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
