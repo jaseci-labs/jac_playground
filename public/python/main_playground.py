@@ -33,7 +33,6 @@ with open(JAC_PATH, "w") as f:
 try:
     exec("from debugger import DebuggerTerminated", globals())
 except:
-    # Fallback if import fails
     class DebuggerTerminated(Exception):
         pass
 
@@ -45,23 +44,17 @@ with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
         code = \
         "from jaclang.cli.cli import run\n" \
         f"run('{JAC_PATH}')\n"
-        # Ensure printgraph is imported and available
-        exec("from jaclang.cli.cli import printgraph", globals())
         debugger.set_code(code=code, filepath=JAC_PATH)
         debugger.do_run()
 
     except DebuggerTerminated:
-        # Handle our custom termination exception
         print("Debug session ended by user.")
     except SystemExit:
-        # Handle clean debugger termination
         print("Execution stopped by user.")
     except Exception as e:
-        # Check for other termination-related errors
         if "terminated" in str(e).lower():
             print("Execution terminated by user.")
         elif "not a directory" in str(e).lower() or "no such file" in str(e).lower():
-            # Handle the specific bdb.py errors that occur in Pyodide
             print("Debug session ended.")
         else:
             import traceback

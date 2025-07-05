@@ -92,7 +92,7 @@ class Debugger(bdb.Bdb):
             graph_str = self.runeval("printgraph(format='json')")
             self.cb_graph(deduplicate_graph_json(graph_str))
         except Exception as e:
-            pass
+            print(f"[Debugger] Error sending graph: {e}")
         self.set_trace()
 
     # -------------------------------------------------------------------------
