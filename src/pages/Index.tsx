@@ -73,12 +73,10 @@ const Index = () => {
       codeEditorRef.current?.clearExecutionLine();
     }
 
-    let isNewGraph: boolean = true;
     pythonThread.callbackJacGraph = (graph_str: string) => {
       const graph = JSON.parse(graph_str);
       // console.log("JacGraph received:", graph);
       setGraph(graph);
-      isNewGraph = false;
     }
     
     // Assign all the callbacks --------------------------------------------
@@ -187,10 +185,15 @@ const Index = () => {
         pythonThread.startExecution(code);
         setIsRunning(true);
         break;
+
       case "stop":
         pythonThread.terminate();
         // console.log("Stop debugging"); // Removed as redundant
         setDebugStatus("stopped");
+        toast({
+          title: "Execution Stopped",
+          description: "Execution has been stopped.",
+        });
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
