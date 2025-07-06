@@ -65,6 +65,8 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
 
 
   function updateGraph(newNodes: any[], newEdges: any[]) {
+    newNodes = Array.isArray(newNodes) ? newNodes : [];
+    newEdges = Array.isArray(newEdges) ? newEdges : [];
     hideHome();
 
     if (networkRef.current === null || nodesRef.current === null || edgesRef.current === null) {
@@ -122,6 +124,9 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   }
 
   function newGraph(newNodes: any[], newEdges: any[]) {
+    // Ensure newNodes and newEdges are arrays
+    newNodes = Array.isArray(newNodes) ? newNodes : [];
+    newEdges = Array.isArray(newEdges) ? newEdges : [];
     hideHome();
     destroyGraph();
 

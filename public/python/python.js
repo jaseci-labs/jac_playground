@@ -220,6 +220,14 @@ function callbackGraph(graph) {
 }
 
 async function startExecution(safeCode) {
+  safeCode += `
+with entry {
+    print("<==START PRINT GRAPH==>");
+    graph_json = printgraph(format='json');
+    print(graph_json);
+    print("<==END PRINT GRAPH==>");
+}
+  `;
   pyodide.globals.set('SAFE_CODE', safeCode);
   pyodide.globals.set('JAC_PATH', JAC_PATH);
   pyodide.globals.set('CB_STDOUT', callbackStdout);

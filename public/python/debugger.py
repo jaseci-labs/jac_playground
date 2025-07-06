@@ -42,12 +42,17 @@ class Debugger(bdb.Bdb):
         self.curframe = None
         self.breakpoint_buff = []
         self._terminated = False  # Add termination flag
+        self.total_lines = 0
 
         self.cb_break: Callable[[Debugger, int], None] = lambda dbg, lineno: None
         self.cb_graph: Callable[[str], None] = lambda graph: None
 
     def set_code(self, code: str, filepath: str) -> None:
         self.filepath = filepath
+
+        with open(filepath, "r") as f:
+            source = f.read()
+            self.total_lines = len(source.splitlines())
         self.code = code
         self.curframe = None
         self.clear_breakpoints()
@@ -63,9 +68,13 @@ class Debugger(bdb.Bdb):
             self.curframe = frame
             self.set_continue()
         elif frame.f_code.co_filename == self.filepath:
+            lineno = frame.f_lineno
+            if lineno >= (self.total_lines - 5):
+                self.set_continue()
+                return
             self._send_graph()
             self.curframe = frame
-            self.cb_break(self, frame.f_lineno)
+            self.cb_break(self, lineno)
         else:
             self.do_step_into()  # Just step till we reach the file again.
 
@@ -113,8 +122,6 @@ class Debugger(bdb.Bdb):
             self.set_break(self.filepath, lineno)
         self.breakpoint_buff.clear()
         self.run(self.code)
-        time.sleep(0.2)
-        self._send_graph()
 
     def do_continue(self) -> None:
         self.set_continue()

@@ -1,4 +1,5 @@
 import io
+import re
 import contextlib
 import bdb
 
@@ -37,7 +38,7 @@ except:
         pass
 
 
-with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
+with contextlib.redirect_stdout(stdout_buf:=JsIO(CB_STDOUT)), \
         contextlib.redirect_stderr(JsIO(CB_STDERR)):
 
     try:
@@ -46,6 +47,15 @@ with contextlib.redirect_stdout(JsIO(CB_STDOUT)), \
         f"run('{JAC_PATH}')\n"
         debugger.set_code(code=code, filepath=JAC_PATH)
         debugger.do_run()
+        # Grab the graph output from the debugger
+        full_output = stdout_buf.getvalue()
+        matches = re.findall(
+            r'<==START PRINT GRAPH==>(.*?)<==END PRINT GRAPH==>',
+            full_output,
+            re.DOTALL,
+        )
+        graph_json = matches[-1] if matches else "{}"
+        debugger.cb_graph(graph_json)
 
     except DebuggerTerminated:
         print("Debug session ended by user.")
