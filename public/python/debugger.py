@@ -9,7 +9,7 @@ class DebuggerTerminated(Exception):
     pass
 
 
-def deduplicate_graph_json(graph_json_str):
+def fix_duplicate_graph_json(graph_json_str):
     graph = json.loads(graph_json_str)
 
     # Deduplicate nodes by 'id'
@@ -30,7 +30,6 @@ def deduplicate_graph_json(graph_json_str):
             seen_edges.add(edge_key)
             unique_edges.append(edge)
     graph["edges"] = unique_edges
-
     return json.dumps(graph)
 
 class Debugger(bdb.Bdb):
@@ -99,7 +98,7 @@ class Debugger(bdb.Bdb):
     def _send_graph(self) -> None:
         try:
             graph_str = self.runeval("printgraph(format='json')")
-            self.cb_graph(deduplicate_graph_json(graph_str))
+            self.cb_graph(fix_duplicate_graph_json(graph_str))
         except Exception as e:
             print(f"[Debugger] Error sending graph: {e}")
         self.set_trace()

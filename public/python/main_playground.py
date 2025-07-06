@@ -1,5 +1,6 @@
 import io
 import re
+import json
 import contextlib
 import bdb
 
@@ -9,6 +10,31 @@ JAC_PATH  = globals()["JAC_PATH"]
 CB_STDOUT = globals()["CB_STDOUT"]
 CB_STDERR = globals()["CB_STDERR"]
 debugger  = globals()["debugger"]
+
+
+def fix_duplicate_graph_json(graph_json_str):
+    graph = json.loads(graph_json_str)
+
+    # Deduplicate nodes by 'id'
+    seen_node_ids = set()
+    unique_nodes = []
+    for node in graph.get("nodes", []):
+        if node["id"] not in seen_node_ids:
+            seen_node_ids.add(node["id"])
+            unique_nodes.append(node)
+    graph["nodes"] = unique_nodes
+
+    # Deduplicate edges by (from, to) tuple
+    seen_edges = set()
+    unique_edges = []
+    for edge in graph.get("edges", []):
+        edge_key = (edge["from"], edge["to"])
+        if edge_key not in seen_edges:
+            seen_edges.add(edge_key)
+            unique_edges.append(edge)
+    graph["edges"] = unique_edges
+    return json.dumps(graph)
+
 
 # Redirect stdout and stderr to javascript callback.
 class JsIO(io.StringIO):
@@ -55,7 +81,7 @@ with contextlib.redirect_stdout(stdout_buf:=JsIO(CB_STDOUT)), \
             re.DOTALL,
         )
         graph_json = matches[-1] if matches else "{}"
-        debugger.cb_graph(graph_json)
+        debugger.cb_graph(fix_duplicate_graph_json(graph_json))
 
     except DebuggerTerminated:
         print("Debug session ended by user.")
