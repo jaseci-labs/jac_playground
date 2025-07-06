@@ -65,6 +65,8 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
 
 
   function updateGraph(newNodes: any[], newEdges: any[]) {
+    newNodes = Array.isArray(newNodes) ? newNodes : [];
+    newEdges = Array.isArray(newEdges) ? newEdges : [];
     hideHome();
 
     if (networkRef.current === null || nodesRef.current === null || edgesRef.current === null) {
@@ -85,39 +87,46 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
         }
       }
 
-      networkRef.current.setOptions({
-        physics: {
-          enabled: true,
-          stabilization: {
-            enabled: false
-          },
-          barnesHut: {
-            gravitationalConstant: -2000,
-            centralGravity: 0.3,
-            springLength: 95,
-            springConstant: 0.04,
-            damping: 0.09
-          }
-        }
-      });
-
-      setTimeout(() => {
+      if (networkRef.current) {
         networkRef.current.setOptions({
           physics: {
+            enabled: true,
             stabilization: {
-              enabled: true,
-              iterations: 100,
-              updateInterval: 25,
-              onlyDynamicEdges: false,
-              fit: true
+              enabled: false
+            },
+            barnesHut: {
+              gravitationalConstant: -2000,
+              centralGravity: 0.3,
+              springLength: 95,
+              springConstant: 0.04,
+              damping: 0.09
             }
           }
         });
+      }
+
+      setTimeout(() => {
+        if (networkRef.current) {
+          networkRef.current.setOptions({
+            physics: {
+              stabilization: {
+                enabled: true,
+                iterations: 100,
+                updateInterval: 25,
+                onlyDynamicEdges: false,
+                fit: true
+              }
+            }
+          });
+        }
       }, 2000);
     }
   }
 
   function newGraph(newNodes: any[], newEdges: any[]) {
+    // Ensure newNodes and newEdges are arrays
+    newNodes = Array.isArray(newNodes) ? newNodes : [];
+    newEdges = Array.isArray(newEdges) ? newEdges : [];
     hideHome();
     destroyGraph();
 
@@ -140,9 +149,11 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
     };
 
     setTimeout(() => {
-      if (container) {
+      if (container && typeof vis !== 'undefined') {
         networkRef.current = new vis.Network(container, data, options);
-        networkRef.current.stabilize();
+        if (networkRef.current) {
+          networkRef.current.stabilize();
+        }
       }
     }, 50);
   }
@@ -157,9 +168,6 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   useEffect(() => {
     if (debugStatus) {
       destroyGraph();
-      if (networkRef.current) {
-        networkRef.current.destroy();
-      }
     } else if (graph && networkElement.current) {
       newGraph(graph["nodes"], graph["edges"]);
     }

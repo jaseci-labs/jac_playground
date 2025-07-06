@@ -36,12 +36,10 @@ export class PythonThread {
   callbackJacGraph: (graph: string) => void;
 
   constructor(loadedCallback: () => void) {
-
     const sharedBuffer = new SharedArrayBuffer(4 * SHARED_INT_SIZE); // 4 bytes for one Int32
     this.sharedInts = new Int32Array(sharedBuffer);
 
     this.pythonThread = new Worker(PYTHON_WORKER_PATH);
-
     this.callbackLoaded = loadedCallback;
     this.pythonThread.onmessage = this.messageHandler.bind(this);
     this.pythonThread.postMessage({ type: 'initialize', sharedBuffer: sharedBuffer });
@@ -52,7 +50,7 @@ export class PythonThread {
   // ---------------------------------------------------------
 
   setBreakpoints(breakpoints: number[]) {
-    this.logMessage(`Setting breakpoints: ${breakpoints}`);
+    // this.logMessage(`Setting breakpoints: ${breakpoints}`); 
     // If not running, we send this message to buffer the breakpoints
     // which will be set when the execution starts.
     if (!this.isRunning) {
@@ -87,28 +85,28 @@ export class PythonThread {
   }
 
   continueExecution() {
-    this.logMessage("Continuing execution");
+    // this.logMessage("Continuing execution"); 
     this.sharedInts[0] = 1;
     this.sharedInts[1] = 3;
     Atomics.notify(this.sharedInts, 0, 1);
   }
 
   stepOver() {
-    this.logMessage("Stepping over");
+    // this.logMessage("Stepping over"); 
     this.sharedInts[0] = 1;
     this.sharedInts[1] = 4;
     Atomics.notify(this.sharedInts, 0, 1);
   }
 
   stepInto() {
-    this.logMessage("Stepping into");
+    // this.logMessage("Stepping into"); 
     this.sharedInts[0] = 1;
     this.sharedInts[1] = 5;
     Atomics.notify(this.sharedInts, 0, 1);
   }
 
   stepOut() {
-    this.logMessage("Stepping out");
+    // this.logMessage("Stepping out"); 
     this.sharedInts[0] = 1;
     this.sharedInts[1] = 6;
     Atomics.notify(this.sharedInts, 0, 1);
@@ -135,7 +133,7 @@ export class PythonThread {
 
     switch (data.type) {
       case 'initialized':
-        this.logMessage(`Initialized success=${data.success}`)
+        this.logMessage(`Initialized success=${data.success}`);
         if (data.success) {
           this.loaded = true;
           this.callbackLoaded();
@@ -167,14 +165,14 @@ export class PythonThread {
         break;
 
       case 'jacGraph':
-        this.logMessage('JacGraph received');
+        // this.logMessage('JacGraph received'); 
         if (this.callbackJacGraph !== undefined) {
           this.callbackJacGraph(data.graph);
         }
         break;
 
       default:
-        console.warn('Unknown message type:', data.type);
+        // console.warn('Unknown message type:', data.type); 
         break;
     }
 

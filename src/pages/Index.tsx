@@ -11,6 +11,7 @@ import { defaultCode } from "@/lib/examples";
 import { useMobileDetect } from "@/hooks/useMobileDetect";
 import { DebugPanel } from "@/components/DebugPanel";
 import { DebugControls, DebugAction } from "@/components/DebugControls";
+import { HelpDialog } from "@/components/HelpDialog";
 import { useToast } from "@/hooks/use-toast";
 import jacLogo from "/jaseci.png";
 
@@ -72,15 +73,13 @@ const Index = () => {
       codeEditorRef.current?.clearExecutionLine();
     }
 
-    let isNewGraph: boolean = true;
     pythonThread.callbackJacGraph = (graph_str: string) => {
       const graph = JSON.parse(graph_str);
-      console.log("JacGraph received:", graph);
+      // console.log("JacGraph received:", graph);
       setGraph(graph);
-      isNewGraph = false;
     }
+    
     // Assign all the callbacks --------------------------------------------
-
     try {
       setIsRunning(true);
       pythonThread.startExecution(code);
@@ -154,20 +153,51 @@ const Index = () => {
         break;
 
       case "restart":
+        if (!pythonThread || !pythonThread.loaded || !loaded) {
+          toast({
+            title: "Cannot Restart",
+            description: "Python environment is not ready yet. Please wait for initialization to complete.",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (!code.trim()) {
+          toast({
+            title: "Cannot Restart",
+            description: "No code to execute. Please write some Jac code first.",
+            variant: "destructive",
+          });
+          return;
+        }
         setDebugStatus("restarting");
-        console.log("Restart debugging");
+        // console.log("Restart debugging"); // Removed as redundant
+        toast({
+          title: "Restarting Execution",
+          description: "Stopping current execution and restarting...",
+        });
+        codeEditorRef.current?.clearExecutionLine();
+        if (isRunning) {
+          pythonThread.terminate();
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        setOutput("");
+        setOutIsError(false);
+        pythonThread.startExecution(code);
+        setIsRunning(true);
         break;
 
       case "stop":
         pythonThread.terminate();
-        console.log("Stop debugging");
-        setIsDebugging(false);
+        // console.log("Stop debugging"); // Removed as redundant
         setDebugStatus("stopped");
+        toast({
+          title: "Execution Stopped",
+          description: "Execution has been stopped.",
+        });
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
-  }, [isDebugging, breakpoints]);
-
+  }, [isDebugging, breakpoints, pythonThread, loaded, isRunning, code, toast]);
 
 
   if (!loaded) {
@@ -175,7 +205,6 @@ const Index = () => {
       <JacLoadingOverlay />
     );
   }
-
 
   return (
     <ThemeProvider>
@@ -196,6 +225,7 @@ const Index = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             )}
+            <HelpDialog />
             <ThemeToggle />
           </div>
         </header>
@@ -206,7 +236,7 @@ const Index = () => {
               <div className="flex items-center space-x-2">
                 <Button
                   onClick={runJacCode}
-                  disabled={isRunning}
+                  disabled={isRunning || !loaded}
                   className="space-x-1 bg-primary hover:bg-primary/90"
                 >
                   <Play className="h-4 w-4" />
@@ -220,6 +250,28 @@ const Index = () => {
                   <RefreshCw className="h-4 w-4" />
                   <span>Reset</span>
                 </Button>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">Run</span>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={isDebugging}
+                      onChange={() => handleDebugAction("toggle")}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span className="text-sm font-medium text-muted-foreground">Debug</span>
+                </div>
+              </div>
+              
+              {/* Environment Status Indicator - Right aligned */}
+              <div className="flex items-center space-x-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${loaded ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+                <span className="text-muted-foreground">
+                  {loaded ? 'Environment Ready' : 'Loading Environment...'}
+                </span>
               </div>
             </div>
 
@@ -239,6 +291,8 @@ const Index = () => {
                       onChange={setCode}
                       className="h-full"
                       onBreakpointsChange={handleBreakpointsChange}
+                      onRunCode={runJacCode}
+                      onToggleDebug={() => handleDebugAction("toggle")}
                     />
                   </div>
                   {
@@ -267,6 +321,7 @@ const Index = () => {
                   outIsError={outIsError}
                   isLoading={isRunning}
                   className="h-full"
+                  onClear={() => setOutput("")}
                 />
               </ResizablePanel>
             </div>
