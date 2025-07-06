@@ -76,7 +76,7 @@ const Index = () => {
     let isNewGraph: boolean = true;
     pythonThread.callbackJacGraph = (graph_str: string) => {
       const graph = JSON.parse(graph_str);
-      console.log("JacGraph received:", graph);
+      // console.log("JacGraph received:", graph);
       setGraph(graph);
       isNewGraph = false;
     }
@@ -163,7 +163,6 @@ const Index = () => {
           });
           return;
         }
-        
         if (!code.trim()) {
           toast({
             title: "Cannot Restart",
@@ -172,16 +171,13 @@ const Index = () => {
           });
           return;
         }
-        
         setDebugStatus("restarting");
-        console.log("Restart debugging");
+        // console.log("Restart debugging"); // Removed as redundant
         toast({
           title: "Restarting Execution",
           description: "Stopping current execution and restarting...",
         });
-        
         codeEditorRef.current?.clearExecutionLine();
-        
         if (isRunning) {
           pythonThread.terminate();
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -191,16 +187,14 @@ const Index = () => {
         pythonThread.startExecution(code);
         setIsRunning(true);
         break;
-
       case "stop":
         pythonThread.terminate();
-        console.log("Stop debugging");
+        // console.log("Stop debugging"); // Removed as redundant
         setDebugStatus("stopped");
         codeEditorRef.current?.clearExecutionLine();
         break;
     }
   }, [isDebugging, breakpoints, pythonThread, loaded, isRunning, code, toast]);
-
 
 
   if (!loaded) {
