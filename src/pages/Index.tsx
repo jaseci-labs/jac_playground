@@ -324,6 +324,7 @@ const Index = () => {
                   outIsError={outIsError}
                   isLoading={isRunning}
                   className="h-full"
+                  onClear={() => setOutput("")}
                 />
               </ResizablePanel>
             </div>
