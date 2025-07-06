@@ -7,7 +7,6 @@ var breakpoints_buff = [];
 var dbg = null;  // The debugger instance.
 
 var sharedInts = null;
-var waitingForUi = false;
 var continueExecution = false;
 
 // const PLAYGROUND_PATH = "/playground";
@@ -127,7 +126,6 @@ async function checkJaclangLoaded(pyodide) {
 function callbackBreak(dbg, line) {
 
   logMessage(`before ui: line=$${line}`);
-  waitingForUi = true;
   self.postMessage({ type: 'breakHit', line: line });
 
   continueExecution = false;
