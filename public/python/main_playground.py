@@ -74,14 +74,14 @@ with contextlib.redirect_stdout(stdout_buf:=JsIO(CB_STDOUT)), \
         debugger.set_code(code=code, filepath=JAC_PATH)
         debugger.do_run()
         # Grab the graph output from the debugger
-        full_output = stdout_buf.getvalue()
-        matches = re.findall(
-            r'<==START PRINT GRAPH==>(.*?)<==END PRINT GRAPH==>',
-            full_output,
-            re.DOTALL,
-        )
-        graph_json = matches[-1] if matches else "{}"
-        debugger.cb_graph(fix_duplicate_graph_json(graph_json))
+        # full_output = stdout_buf.getvalue()
+        # matches = re.findall(
+        #     r'<==START PRINT GRAPH==>(.*?)<==END PRINT GRAPH==>',
+        #     full_output,
+        #     re.DOTALL,
+        # )
+        # graph_json = matches[-1] if matches else "{}"
+        # debugger.cb_graph(fix_duplicate_graph_json(graph_json))
 
     except DebuggerTerminated:
         print("Debug session ended by user.")

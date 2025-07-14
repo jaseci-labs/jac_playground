@@ -9,8 +9,8 @@ var dbg = null;  // The debugger instance.
 var sharedInts = null;
 var continueExecution = false;
 
-// const PLAYGROUND_PATH = "/playground";
-const PLAYGROUND_PATH = "";
+const PLAYGROUND_PATH = "/playground";
+// const PLAYGROUND_PATH = "";
 const JAC_PATH = "/tmp/main.jac";
 const LOG_PATH = "/tmp/logs.log";
 
@@ -214,18 +214,33 @@ function callbackStderr(output) {
 }
 
 function callbackGraph(graph) {
+  console.log("[python.js callbackgraph]", graph);
   self.postMessage({ type: 'jacGraph', graph: graph });
 }
 
 async function startExecution(safeCode) {
+//   safeCode += `
+// with entry {
+//     print("<==START PRINT GRAPH==>");
+//     graph_json = printgraph(format='json');
+//     print(graph_json);
+//     print("<==END PRINT GRAPH==>");
+// }
+//   `;
+
   safeCode += `
-with entry {
-    print("<==START PRINT GRAPH==>");
-    graph_json = printgraph(format='json');
-    print(graph_json);
-    print("<==END PRINT GRAPH==>");
-}
-  `;
+::py::
+print("[Before get root]");
+root = _.root()
+print("[Before get root]", id(root));
+
+def get_root():
+  global root
+  print("[After get root]", id(root))
+  return root
+::py::
+  `
+
   pyodide.globals.set('SAFE_CODE', safeCode);
   pyodide.globals.set('JAC_PATH', JAC_PATH);
   pyodide.globals.set('CB_STDOUT', callbackStdout);

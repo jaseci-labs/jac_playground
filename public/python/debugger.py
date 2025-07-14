@@ -97,8 +97,11 @@ class Debugger(bdb.Bdb):
 
     def _send_graph(self) -> None:
         try:
-            graph_str = self.runeval("printgraph(format='json')")
-            self.cb_graph(fix_duplicate_graph_json(graph_str))
+            graph_str = self.runeval("printgraph(node=get_root(), format='json')")
+            print("[send_graph]", graph_str)
+            duplicate_removed_graph = fix_duplicate_graph_json(graph_str)
+            print("[send_graph] after fix", duplicate_removed_graph)
+            self.cb_graph(duplicate_removed_graph)
         except Exception as e:
             print(f"[Debugger] Error sending graph: {e}")
         self.set_trace()
@@ -121,6 +124,7 @@ class Debugger(bdb.Bdb):
             self.set_break(self.filepath, lineno)
         self.breakpoint_buff.clear()
         self.run(self.code)
+        self._send_graph()
 
     def do_continue(self) -> None:
         self.set_continue()
