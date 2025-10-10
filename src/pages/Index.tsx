@@ -5,6 +5,7 @@ import { CodeEditor, CodeEditorHandle } from "@/components/CodeEditor";
 import { OutputPanel } from "@/components/OutputPanel";
 import { ExamplesSidebar } from "@/components/ExamplesSidebar";
 import { ResizablePanel } from "@/components/ResizablePanel";
+import { ResizablePanelGroup, ResizablePanel as UIResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ModeSelector, Mode } from "@/components/ModeSelector";
@@ -100,7 +101,7 @@ const Index = () => {
     });
   };
 
-  const handleRunPython = (pythonCode: string) => {
+  const handleRunJac = (jacCode: string) => {
     if (!loaded || !pythonThread?.loaded) {
       toast({
         title: "Environment Not Ready",
@@ -110,14 +111,10 @@ const Index = () => {
       return;
     }
 
-    // Use Python execution logic
     setOutput("");
     setOutIsError(false);
 
-    // Set up callbacks
-    pythonThread.callbackBreakHit = (line: number) => {
-      // No execution line highlighting needed for conversion panel Python code
-    };
+    // Only set necessary callbacks for conversion panel
     pythonThread.callbackStdout = (outputText: string) => {
       setOutput(prev => prev + outputText);
       setOutIsError(false);
@@ -130,16 +127,52 @@ const Index = () => {
       setIsRunning(false);
     };
     pythonThread.callbackJacGraph = (graph_str: string) => {
-      // Python code doesn't generate Jac graphs, but we keep this for consistency
+      const graph = JSON.parse(graph_str);
+      setGraph(graph);
+    };
+
+    try {
+      setIsRunning(true);
+      pythonThread.startExecution(jacCode);
+      toast({
+        title: "Running Jac Code",
+        description: "Executing Jac code from conversion panel.",
+      });
+    } catch (error) {
+      console.error("Error running Jac code:", error);
+      setOutput(`Error: ${error}`);
+      setIsRunning(false);
+    }
+  };
+
+  const handleRunPython = (pythonCode: string) => {
+    if (!loaded || !pythonThread?.loaded) {
+      toast({
+        title: "Environment Not Ready",
+        description: "Python environment is still loading. Please wait.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setOutput("");
+    setOutIsError(false);
+
+    pythonThread.callbackStdout = (outputText: string) => {
+      setOutput(prev => prev + outputText);
+      setOutIsError(false);
+    };
+    pythonThread.callbackStderr = (errorText: string) => {
+      setOutput(prev => prev + errorText);
+      setOutIsError(true);
+    };
+    pythonThread.callbackExecEnd = () => {
+      setIsRunning(false);
     };
 
     try {
       setIsRunning(true);
       pythonThread.startPythonExecution(pythonCode);
-      toast({
-        title: "Running Python Code",
-        description: "Executing Python code from conversion panel.",
-      });
     } catch (error) {
       console.error("Error running Python code:", error);
       setOutput(`Error: ${error}`);
@@ -338,8 +371,32 @@ const Index = () => {
               <div className="flex-1 overflow-hidden">
                 {/* Render different layouts based on current mode */}
                 {(currentMode === "run" || currentMode === "debug") && (
-                  <div className="flex h-full">
-                    <div className={`${currentMode === "debug" ? 'w-1/2' : 'w-full'} border-r border-border`}>
+                  <div className="h-full">
+                    {currentMode === "debug" ? (
+                      <ResizablePanelGroup direction="horizontal" className="h-full">
+                        <UIResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+                          <CodeEditor
+                            ref={codeEditorRef}
+                            value={code}
+                            onChange={setCode}
+                            className="h-full"
+                            onBreakpointsChange={handleBreakpointsChange}
+                            onRunCode={runJacCode}
+                            onToggleDebug={() => handleDebugAction("toggle")}
+                          />
+                        </UIResizablePanel>
+                        
+                        <ResizableHandle withHandle />
+                        
+                        <UIResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+                          <DebugPanel
+                            graph={graph}
+                            debugStatus={isRunning}
+                            className="h-full"
+                          />
+                        </UIResizablePanel>
+                      </ResizablePanelGroup>
+                    ) : (
                       <CodeEditor
                         ref={codeEditorRef}
                         value={code}
@@ -349,15 +406,6 @@ const Index = () => {
                         onRunCode={runJacCode}
                         onToggleDebug={() => handleDebugAction("toggle")}
                       />
-                    </div>
-                    {currentMode === "debug" && (
-                      <div className="flex-1">
-                        <DebugPanel
-                          graph={graph}
-                          debugStatus={isRunning}
-                          className="h-full"
-                        />
-                      </div>
                     )}
                   </div>
                 )}
@@ -368,7 +416,7 @@ const Index = () => {
                     inputCode={conversionCode}
                     onInputChange={setConversionCode}
                     onConvert={handleConversion}
-                    onRunJac={runJacCode}
+                    onRunJac={handleRunJac}
                     onRunPython={handleRunPython}
                     className="h-full"
                   />

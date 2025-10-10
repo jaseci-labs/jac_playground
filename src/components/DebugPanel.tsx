@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
+import { Activity, GitBranch } from "lucide-react";
 
 interface DebugPanelProps {
   graph: JSON;
@@ -35,7 +36,7 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
     return dataEdgesRef.current.some(e => edgesEqual(e, edge));
   }
 
-  function hideHome() {
+  function showGraph() {
     setGraphVisible(true);
   }
 
@@ -58,16 +59,13 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
     dataNodesRef.current = [];
     dataEdgesRef.current = [];
 
-    // if (networkElement.current) {
-    //   networkElement.current.innerHTML = "";
-    // }
   }
 
 
   function updateGraph(newNodes: any[], newEdges: any[]) {
     newNodes = Array.isArray(newNodes) ? newNodes : [];
     newEdges = Array.isArray(newEdges) ? newEdges : [];
-    hideHome();
+    showGraph();
 
     if (networkRef.current === null || nodesRef.current === null || edgesRef.current === null) {
       newGraph(newNodes, newEdges);
@@ -124,19 +122,34 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   }
 
   function newGraph(newNodes: any[], newEdges: any[]) {
+    console.log("newGraph called with:", { nodes: newNodes, edges: newEdges });
+    
     // Ensure newNodes and newEdges are arrays
     newNodes = Array.isArray(newNodes) ? newNodes : [];
     newEdges = Array.isArray(newEdges) ? newEdges : [];
-    hideHome();
+    
+    showGraph();
     destroyGraph();
 
     dataNodesRef.current = [...newNodes];
     dataEdgesRef.current = [...newEdges];
 
+    const container = networkElement.current;
+    console.log("vis library available:", typeof vis !== 'undefined');
+
+    if (!container) {
+      console.error("Network container not available");
+      return;
+    }
+
+    if (typeof vis === 'undefined') {
+      console.error("vis library not loaded");
+      return;
+    }
+
     nodesRef.current = new vis.DataSet(newNodes);
     edgesRef.current = new vis.DataSet(newEdges);
 
-    const container = networkElement.current;
     const data = { nodes: nodesRef.current, edges: edgesRef.current };
     const options = {
       physics: {
@@ -149,18 +162,33 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
     };
 
     setTimeout(() => {
-      if (container && typeof vis !== 'undefined') {
+      try {
         networkRef.current = new vis.Network(container, data, options);
+        console.log("vis.Network created successfully");
         if (networkRef.current) {
           networkRef.current.stabilize();
         }
+      } catch (error) {
+        console.error("Error creating vis.Network:", error);
       }
-    }, 50);
+    }, 100);
   }
 
   useEffect(() => {
     if (graph && networkElement.current) {
-      updateGraph(graph["nodes"], graph["edges"]);
+      const nodes = graph["nodes"] || [];
+      const edges = graph["edges"] || [];
+      
+      console.log("DebugPanel: Graph data received", { 
+        nodesCount: nodes.length, 
+        edgesCount: edges.length,
+        nodes: nodes,
+        edges: edges 
+      });
+      
+      if (nodes.length > 0) {
+        updateGraph(nodes, edges);
+      }
     }
   }, [graph]);
 
@@ -177,23 +205,60 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
   return (
     <div
       className={cn(
-        "h-full w-full flex flex-col items-center justify-center bg-card text-foreground p-4",
+        "h-full w-full flex flex-col bg-card text-foreground",
         className
       )}
     >
-      {!isGraphVisible && (
-        <p className="flex justify-center items-center text-[2em] font-bold text-[#f1982a]">
-          Jaclang Graph Visualizer
-        </p>
-      )}
-      <div
-        ref={networkElement}
-        id="mynetwork"
-        className={cn(
-          "w-full h-[80vh] border border-gray-300",
-          isGraphVisible ? "block" : "hidden"
+      {/* Debug Panel Header */}
+      <div className="h-12 border-b bg-muted/30 flex items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <GitBranch className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-medium">Graph Visualizer</h3>
+          {debugStatus && (
+            <div className="flex items-center gap-1 ml-2">
+              <Activity className="h-3 w-3 text-green-500 animate-pulse" />
+              <span className="text-xs text-green-500">Running</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {graph && (
+            <div className="text-xs text-muted-foreground">
+              Nodes: {Array.isArray(graph["nodes"]) ? graph["nodes"].length : 0} | 
+              Edges: {Array.isArray(graph["edges"]) ? graph["edges"].length : 0}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Graph Content */}
+      <div className="flex-1 relative overflow-hidden">
+        {(!graph || !Array.isArray(graph["nodes"]) || graph["nodes"].length === 0) ? (
+          <div className="h-full flex flex-col items-center justify-center bg-muted/20">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                <GitBranch className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Jac Graph Visualizer
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Execute your Jac code to see the graph visualization. 
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="h-full w-full bg-background">
+            <div
+              ref={networkElement}
+              id="mynetwork"
+              className="w-full h-full border-0"
+            />
+          </div>
         )}
-      ></div>
+      </div>
     </div>
   );
 }

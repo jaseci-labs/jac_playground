@@ -10,6 +10,7 @@ interface CodeEditorProps {
   onChange: (value: string) => void;
   className?: string;
   language?: string;
+  readOnly?: boolean;
   onBreakpointsChange?: (breakpoints: number[]) => void;
   onRunCode?: () => void; // Callback for Ctrl+Enter
   onToggleDebug?: () => void; // Callback for F5
@@ -21,7 +22,7 @@ export interface CodeEditorHandle {
 }
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
-  ({ value, onChange, className, language = "jac", onBreakpointsChange, onRunCode, onToggleDebug }, ref) => {
+  ({ value, onChange, className, language = "jac", readOnly = false, onBreakpointsChange, onRunCode, onToggleDebug }, ref) => {
     const editorRef = useRef<any>(null);
     const breakpointsRef = useRef<Set<number>>(new Set());
     const decorationsCollectionRef = useRef<any>(null);
@@ -176,15 +177,16 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
               horizontalScrollbarSize: 10,
             },
             lineNumbers: "on",
-            glyphMargin: true,
+            glyphMargin: !readOnly,
             folding: true,
-            lineDecorationsWidth: 10,
+            lineDecorationsWidth: readOnly ? 0 : 10,
             automaticLayout: true,
             scrollBeyondLastLine: false,
             renderLineHighlight: "all",
             tabSize: 2,
             fixedOverflowWidgets: true,
             padding: { top: 10, bottom: 10 },
+            readOnly: readOnly,
           }}
         />
       </div>

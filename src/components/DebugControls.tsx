@@ -36,7 +36,7 @@ export function DebugControls({
   return (
     <TooltipProvider>
       <div className={cn(
-        "flex items-center gap-1 md:gap-2 p-1 md:p-2 bg-card border-t border-border overflow-x-auto", 
+        "flex items-center gap-1 p-1.5 bg-card border-t border-border overflow-x-auto", 
         className
       )}>
         {isDebugging && (
@@ -48,8 +48,9 @@ export function DebugControls({
                   size="sm" 
                   onClick={() => onDebugAction("continue")}
                   disabled={!isPaused}
+                  className="h-7 w-7 p-0"
                 >
-                  <Play className="h-4 w-4" />
+                  <Play className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -64,8 +65,9 @@ export function DebugControls({
                   size="sm" 
                   onClick={() => onDebugAction("stepOver")}
                   disabled={!isPaused}
+                  className="h-7 w-7 p-0"
                 >
-                  <SkipForward className="h-4 w-4" />
+                  <SkipForward className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -80,8 +82,9 @@ export function DebugControls({
                   size="sm" 
                   onClick={() => onDebugAction("stepInto")}
                   disabled={!isPaused}
+                  className="h-7 w-7 p-0"
                 >
-                  <ArrowDown className="h-4 w-4" />
+                  <ArrowDown className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -96,8 +99,9 @@ export function DebugControls({
                   size="sm" 
                   onClick={() => onDebugAction("stepOut")}
                   disabled={!isPaused}
+                  className="h-7 w-7 p-0"
                 >
-                  <ArrowUp className="h-4 w-4" />
+                  <ArrowUp className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -111,8 +115,9 @@ export function DebugControls({
                   variant="ghost" 
                   size="sm" 
                   onClick={() => onDebugAction("restart")}
+                  className="h-7 w-7 p-0"
                 >
-                  <RotateCw className="h-4 w-4" />
+                  <RotateCw className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -126,9 +131,9 @@ export function DebugControls({
                   variant="ghost" 
                   size="sm" 
                   onClick={() => onDebugAction("stop")}
-                  className="text-red-500 hover:text-red-600"
+                  className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
                 >
-                  <Square className="h-4 w-4" />
+                  <Square className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
