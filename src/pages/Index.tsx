@@ -181,6 +181,7 @@ const Index = () => {
   };
 
   const handleSelectExample = (exampleCode: string) => {
+    setCurrentMode("run");
     setCode(exampleCode);
     if (isMobile) {
       setShowMobileSidebar(false);

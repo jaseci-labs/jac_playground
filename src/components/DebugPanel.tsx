@@ -221,14 +221,14 @@ export function DebugPanel({ graph, debugStatus, className }: DebugPanelProps) {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           {graph && (
             <div className="text-xs text-muted-foreground">
               Nodes: {Array.isArray(graph["nodes"]) ? graph["nodes"].length : 0} | 
               Edges: {Array.isArray(graph["edges"]) ? graph["edges"].length : 0}
             </div>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Graph Content */}
