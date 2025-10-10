@@ -37,6 +37,7 @@ const Index = () => {
   const [loaded, setloaded] = useState(false);
   const [graph, setGraph] = useState<JSON>(null);
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
+  
   const isMobile = useMobileDetect();
   const { toast } = useToast();
   const codeEditorRef = useRef<CodeEditorHandle>(null);
@@ -99,6 +100,21 @@ const Index = () => {
     });
   };
 
+  const handleRunPython = (pythonCode: string) => {
+    // For now, show a message that Python execution is not yet implemented
+    toast({
+      title: "Python Execution",
+      description: "Python code execution will be implemented in a future update.",
+      variant: "default",
+    });
+    
+    // TODO: Implement Python code execution
+    // This would require either:
+    // 1. A separate Python execution environment in the browser
+    // 2. Converting Python to Jac and running it
+    // 3. A backend service for Python execution
+  };
+
   const handleSelectExample = (exampleCode: string) => {
     setCode(exampleCode);
     if (isMobile) {
@@ -127,12 +143,14 @@ const Index = () => {
 
   const handleModeChange = useCallback((mode: Mode) => {
     setCurrentMode(mode);
-    if (mode !== "jac2py" && mode !== "py2jac") {
-      setConversionCode("");
-    }
+    setConversionCode("");
+
   }, []);
 
   const handleConversion = useCallback(async (inputCode: string): Promise<string> => {
+    setOutput("");
+    setOutIsError(false);
+
     if (currentMode === "jac2py") {
       return await convertJacToPython(inputCode);
     } else if (currentMode === "py2jac") {
@@ -318,13 +336,14 @@ const Index = () => {
                     inputCode={conversionCode}
                     onInputChange={setConversionCode}
                     onConvert={handleConversion}
+                    onRunJac={runJacCode}
+                    onRunPython={handleRunPython}
                     className="h-full"
                   />
                 )}
               </div>
 
-              {/* Only show output panel for run and debug modes */}
-              {(currentMode === "run" || currentMode === "debug") && (
+              {(currentMode === "run" || currentMode === "debug" || currentMode === "jac2py" || currentMode === "py2jac") && (
                 <ResizablePanel
                   direction="horizontal"
                   defaultSize={30}

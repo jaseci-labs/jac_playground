@@ -9,6 +9,7 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  language?: string;
   onBreakpointsChange?: (breakpoints: number[]) => void;
   onRunCode?: () => void; // Callback for Ctrl+Enter
   onToggleDebug?: () => void; // Callback for F5
@@ -20,7 +21,7 @@ export interface CodeEditorHandle {
 }
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
-  ({ value, onChange, className, onBreakpointsChange, onRunCode, onToggleDebug }, ref) => {
+  ({ value, onChange, className, language = "jac", onBreakpointsChange, onRunCode, onToggleDebug }, ref) => {
     const editorRef = useRef<any>(null);
     const breakpointsRef = useRef<Set<number>>(new Set());
     const decorationsCollectionRef = useRef<any>(null);
@@ -62,11 +63,16 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     const handleEditorDidMount: OnMount = useCallback(async (editor, monaco) => {
       editorRef.current = editor;
       monacoRef.current = monaco;
-      await registerJacLanguage(monaco, editor);
+      
+      // Only register Jac language if we're using Jac
+      if (language === "jac") {
+        await registerJacLanguage(monaco, editor);
+      }
+      
       editor.focus();
 
       editor.onMouseDown((e) => {
-        if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+        if (language === "jac" && e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
           const line = e.target.position?.lineNumber;
           if (!line) return;
 
@@ -99,37 +105,40 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       });
 
       // Add keyboard shortcuts
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        onRunCode?.();
-      });
+      // Only add Jac-specific keyboard shortcuts and context menu for Jac language
+      if (language === "jac") {
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+          onRunCode?.();
+        });
 
-      editor.addCommand(monaco.KeyCode.F5, () => {
-        onToggleDebug?.();
-      });
+        editor.addCommand(monaco.KeyCode.F5, () => {
+          onToggleDebug?.();
+        });
 
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.F5, () => {
-        onRunCode?.();
-      });
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.F5, () => {
+          onRunCode?.();
+        });
 
-      // Add context menu actions
-      editor.addAction({
-        id: 'run-code',
-        label: 'Run Code (Ctrl+Enter)',
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-        contextMenuGroupId: '1_modification',
-        contextMenuOrder: 1,
-        run: () => onRunCode?.()
-      });
+        // Add context menu actions
+        editor.addAction({
+          id: 'run-code',
+          label: 'Run Code (Ctrl+Enter)',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+          contextMenuGroupId: '1_modification',
+          contextMenuOrder: 1,
+          run: () => onRunCode?.()
+        });
 
-      editor.addAction({
-        id: 'toggle-debug',
-        label: 'Toggle Debug Mode (F5)',
-        keybindings: [monaco.KeyCode.F5],
-        contextMenuGroupId: '2_debug',
-        contextMenuOrder: 1,
-        run: () => onToggleDebug?.()
-      });
-    }, [registerJacLanguage, onRunCode, onToggleDebug]);
+        editor.addAction({
+          id: 'toggle-debug',
+          label: 'Toggle Debug Mode (F5)',
+          keybindings: [monaco.KeyCode.F5],
+          contextMenuGroupId: '2_debug',
+          contextMenuOrder: 1,
+          run: () => onToggleDebug?.()
+        });
+      }
+    }, [language, registerJacLanguage, onRunCode, onToggleDebug]);
 
 
     useImperativeHandle(ref, () => ({
@@ -152,7 +161,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
         <Editor
           height="100%"
           width="100%"
-          language="jac"
+          language={language}
           value={value}
           theme="vs-dark"
           onChange={(value) => onChange(value || "")}

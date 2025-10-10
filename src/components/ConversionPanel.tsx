@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Copy, Check } from "lucide-react";
+import { ArrowRight, Copy, Check, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodeEditor } from "./CodeEditor";
 
@@ -9,6 +9,8 @@ interface ConversionPanelProps {
   inputCode: string;
   onInputChange: (code: string) => void;
   onConvert: (code: string) => Promise<string>;
+  onRunJac?: (code: string) => void;
+  onRunPython?: (code: string) => void;
   className?: string;
 }
 
@@ -17,11 +19,18 @@ export function ConversionPanel({
   inputCode,
   onInputChange,
   onConvert,
+  onRunJac,
+  onRunPython,
   className
 }: ConversionPanelProps) {
   const [outputCode, setOutputCode] = useState("");
   const [isConverting, setIsConverting] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setOutputCode("");
+    setCopied(false);
+  }, [mode]);
 
   const handleConvert = async () => {
     if (!inputCode.trim()) return;
@@ -47,6 +56,26 @@ export function ConversionPanel({
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
+    }
+  };
+
+  const handleRunInput = () => {
+    if (!inputCode.trim()) return;
+    
+    if (mode === "jac2py") {
+      onRunJac?.(inputCode);
+    } else {
+      onRunPython?.(inputCode);
+    }
+  };
+
+  const handleRunOutput = () => {
+    if (!outputCode.trim()) return;
+    
+    if (mode === "jac2py") {
+      onRunPython?.(outputCode);
+    } else {
+      onRunJac?.(outputCode);
     }
   };
 
@@ -79,13 +108,26 @@ export function ConversionPanel({
       <div className="flex-1 flex overflow-hidden">
         {/* Input Panel */}
         <div className="w-1/2 border-r border-border flex flex-col">
-          <div className="h-8 bg-muted/50 border-b flex items-center px-3">
+          <div className="h-8 bg-muted/50 border-b flex items-center justify-between px-3">
             <span className="text-xs font-medium text-muted-foreground">{inputLabel}</span>
+            {inputCode && (onRunJac || onRunPython) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRunInput}
+                className="h-6 px-2"
+                title={`Run ${inputLabel}`}
+              >
+                <Play className="h-3 w-3" />
+              </Button>
+            )}
           </div>
           <div className="flex-1">
             <CodeEditor
               value={inputCode}
               onChange={onInputChange}
+              language={mode === "jac2py" ? "jac" : "python"}
+              onRunCode={handleRunInput}
               className="h-full"
             />
           </div>
@@ -95,26 +137,42 @@ export function ConversionPanel({
         <div className="w-1/2 flex flex-col">
           <div className="h-8 bg-muted/50 border-b flex items-center justify-between px-3">
             <span className="text-xs font-medium text-muted-foreground">{outputLabel}</span>
-            {outputCode && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-6 px-2"
-              >
-                {copied ? (
-                  <Check className="h-3 w-3 text-green-500" />
-                ) : (
-                  <Copy className="h-3 w-3" />
-                )}
-              </Button>
-            )}
+            <div className="flex items-center gap-1">
+              {outputCode && (onRunJac || onRunPython) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRunOutput}
+                  className="h-6 px-2"
+                  title={`Run ${outputLabel}`}
+                >
+                  <Play className="h-3 w-3" />
+                </Button>
+              )}
+              {outputCode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="h-6 px-2"
+                  title="Copy to clipboard"
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3 text-green-500" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
           <div className="flex-1 bg-muted/20">
             {outputCode ? (
               <CodeEditor
                 value={outputCode}
                 onChange={() => {}}
+                language={mode === "jac2py" ? "python" : "jac"}
+                onRunCode={handleRunOutput}
                 className="h-full"
               />
             ) : (
