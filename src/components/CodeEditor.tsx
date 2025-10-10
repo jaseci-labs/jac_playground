@@ -33,7 +33,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       if (textMateLoaded.current) return;
 
       try {
-        const grammerConfig = await loadSyntax(monaco, editor, value);
+        const grammerConfig = await loadSyntax(monaco, editor);
         await configureTheme(monaco, grammerConfig);
         textMateLoaded.current = true;
       } catch (error) {
