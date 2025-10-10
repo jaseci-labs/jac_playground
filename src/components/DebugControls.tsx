@@ -35,112 +35,137 @@ export function DebugControls({
 }: DebugControlsProps) {
   return (
     <TooltipProvider>
-      <div className={cn(
-        "flex items-center gap-1 p-1.5 bg-card border-t border-border overflow-x-auto", 
-        className
-      )}>
+      <div
+        className={cn(
+          "flex items-center justify-center gap-2 py-1 px-2 bg-card border-t border-border", 
+          className
+        )}
+        style={{
+          minHeight: "40px",
+          margin: "0 auto",
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
         {isDebugging && (
-          <>
+          <div className="flex items-center justify-center gap-2 w-full">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDebugAction("continue")}
                   disabled={!isPaused}
-                  className="h-7 w-7 p-0"
+                  className={cn(
+                    "rounded-full h-9 w-9 flex items-center justify-center p-0 border border-transparent transition-colors",
+                    "bg-[#2c2c32] hover:bg-[#3c3c42] active:bg-[#23232a]",
+                    !isPaused ? "opacity-60 cursor-not-allowed" : ""
+                  )}
                 >
-                  <Play className="h-3.5 w-3.5" />
+                  <Play className="h-5 w-5 text-green-500" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Continue</p>
               </TooltipContent>
             </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDebugAction("stepOver")}
                   disabled={!isPaused}
-                  className="h-7 w-7 p-0"
+                  className={cn(
+                    "rounded-full h-9 w-9 flex items-center justify-center p-0 border border-transparent transition-colors",
+                    "bg-[#2c2c32] hover:bg-[#3c3c42] active:bg-[#23232a]",
+                    !isPaused ? "opacity-60 cursor-not-allowed" : ""
+                  )}
                 >
-                  <SkipForward className="h-3.5 w-3.5" />
+                  <SkipForward className="h-5 w-5 text-blue-400" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Step Over</p>
               </TooltipContent>
             </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDebugAction("stepInto")}
                   disabled={!isPaused}
-                  className="h-7 w-7 p-0"
+                  className={cn(
+                    "rounded-full h-9 w-9 flex items-center justify-center p-0 border border-transparent transition-colors",
+                    "bg-[#2c2c32] hover:bg-[#3c3c42] active:bg-[#23232a]",
+                    !isPaused ? "opacity-60 cursor-not-allowed" : ""
+                  )}
                 >
-                  <ArrowDown className="h-3.5 w-3.5" />
+                  <ArrowDown className="h-5 w-5 text-blue-400" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Step Into</p>
               </TooltipContent>
             </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDebugAction("stepOut")}
                   disabled={!isPaused}
-                  className="h-7 w-7 p-0"
+                  className={cn(
+                    "rounded-full h-9 w-9 flex items-center justify-center p-0 border border-transparent transition-colors",
+                    "bg-[#2c2c32] hover:bg-[#3c3c42] active:bg-[#23232a]",
+                    !isPaused ? "opacity-60 cursor-not-allowed" : ""
+                  )}
                 >
-                  <ArrowUp className="h-3.5 w-3.5" />
+                  <ArrowUp className="h-5 w-5 text-blue-400" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Step Out</p>
               </TooltipContent>
             </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDebugAction("restart")}
-                  className="h-7 w-7 p-0"
+                  className={cn(
+                    "rounded-full h-9 w-9 flex items-center justify-center p-0 border border-transparent transition-colors",
+                    "bg-[#2c2c32] hover:bg-[#3c3c42] active:bg-[#23232a]"
+                  )}
                 >
-                  <RotateCw className="h-3.5 w-3.5" />
+                  <RotateCw className="h-5 w-5 text-yellow-400" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Restart</p>
               </TooltipContent>
             </Tooltip>
-            
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDebugAction("stop")}
-                  className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
+                  className={cn(
+                    "rounded-full h-9 w-9 flex items-center justify-center p-0 border border-transparent transition-colors",
+                    "bg-[#2c2c32] hover:bg-[#3c3c42] active:bg-[#23232a]"
+                  )}
                 >
-                  <Square className="h-3.5 w-3.5" />
+                  <Square className="h-5 w-5 text-red-500" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Stop</p>
               </TooltipContent>
             </Tooltip>
-          </>
+          </div>
         )}
       </div>
     </TooltipProvider>
