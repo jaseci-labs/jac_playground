@@ -51,101 +51,69 @@ export async function executeCode(code: string): Promise<string> {
   return outputLines.join("\n");
 }
 
-// Mock conversion service for Jac to Python
+// Global reference to the Python thread - will be set by the main component
+let globalPythonThread: any = null;
+
+export function setPythonThread(pythonThread: any) {
+  globalPythonThread = pythonThread;
+}
+
+// Conversion service for Jac to Python using actual jaclang
 export async function convertJacToPython(jacCode: string): Promise<string> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  
   if (!jacCode.trim()) {
     throw new Error("No Jac code provided");
   }
   
-  // This is a mock conversion. In a real implementation, this would call the Jaclang transpiler
-  const lines = jacCode.split("\n");
-  const pythonLines: string[] = [];
-  
-  pythonLines.push("# Auto-generated Python code from Jac");
-  pythonLines.push("# This is a mock conversion - real implementation would use Jaclang transpiler");
-  pythonLines.push("");
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    // Convert Jac-specific syntax to Python equivalents (mock examples)
-    if (trimmedLine.startsWith("walker ")) {
-      pythonLines.push(line.replace("walker ", "class ") + ":");
-    } else if (trimmedLine.startsWith("node ")) {
-      pythonLines.push(line.replace("node ", "class ") + ":");
-    } else if (trimmedLine.includes(" can ")) {
-      // Convert "can" methods to Python methods
-      pythonLines.push(line.replace(" can ", " def ") + ":");
-    } else if (trimmedLine.includes("-->")) {
-      // Convert graph traversal syntax
-      pythonLines.push("    # Graph traversal: " + line);
-    } else {
-      // Keep other lines as-is for now
-      pythonLines.push(line);
-    }
+  if (!globalPythonThread || !globalPythonThread.loaded) {
+    throw new Error("Python environment not ready");
   }
   
-  return pythonLines.join("\n");
+  return new Promise((resolve, reject) => {
+    // Set up callback for conversion result
+    globalPythonThread.callbackConversionResult = (result: string) => {
+      if (result.startsWith("// Error")) {
+        reject(new Error(result.replace("// Error during conversion:\n// ", "")));
+      } else {
+        resolve(result);
+      }
+    };
+    
+    // Start the conversion
+    globalPythonThread.startConversion('jac2py', jacCode);
+    
+    // Set a timeout to avoid hanging
+    setTimeout(() => {
+      reject(new Error("Conversion timeout - operation took too long"));
+    }, 30000); // 30 second timeout
+  });
 }
 
-// Mock conversion service for Python to Jac
+// Conversion service for Python to Jac using actual jaclang
 export async function convertPythonToJac(pythonCode: string): Promise<string> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  
   if (!pythonCode.trim()) {
     throw new Error("No Python code provided");
   }
   
-  // This is a mock conversion. In a real implementation, this would use AI or rule-based conversion
-  const lines = pythonCode.split("\n");
-  const jacLines: string[] = [];
+  if (!globalPythonThread || !globalPythonThread.loaded) {
+    throw new Error("Python environment not ready");
+  }
   
-  jacLines.push("// Auto-generated Jac code from Python");
-  jacLines.push("// This is a mock conversion - real implementation would use intelligent conversion");
-  jacLines.push("");
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    // Convert Python-specific syntax to Jac equivalents (mock examples)
-    if (trimmedLine.startsWith("class ") && trimmedLine.endsWith(":")) {
-      const className = trimmedLine.slice(6, -1);
-      if (className.toLowerCase().includes("walker") || className.toLowerCase().includes("agent")) {
-        jacLines.push(line.replace("class ", "walker ").replace(":", " {"));
-      } else if (className.toLowerCase().includes("node") || className.toLowerCase().includes("state")) {
-        jacLines.push(line.replace("class ", "node ").replace(":", " {"));
+  return new Promise((resolve, reject) => {
+    // Set up callback for conversion result
+    globalPythonThread.callbackConversionResult = (result: string) => {
+      if (result.startsWith("// Error")) {
+        reject(new Error(result.replace("// Error during conversion:\n// ", "")));
       } else {
-        jacLines.push(line.replace("class ", "obj ").replace(":", " {"));
+        resolve(result);
       }
-    } else if (trimmedLine.startsWith("def ")) {
-      // Convert Python methods to Jac "can" methods
-      jacLines.push(line.replace("def ", "can ").replace(":", " {"));
-    } else if (trimmedLine.startsWith("print(")) {
-      // Keep print statements but adjust syntax if needed
-      jacLines.push(line.replace("print(", "print(").replace(")", ");"));
-    } else if (trimmedLine === "" || trimmedLine.startsWith("#")) {
-      // Keep empty lines and comments
-      jacLines.push(line);
-    } else {
-      // Keep other lines with minor adjustments
-      let jacLine = line;
-      if (trimmedLine && !trimmedLine.endsWith(";") && !trimmedLine.endsWith("{") && !trimmedLine.endsWith("}")) {
-        jacLine = line + ";";
-      }
-      jacLines.push(jacLine);
-    }
-  }
-  
-  // Close any open braces (simple heuristic)
-  const openBraces = jacLines.filter(line => line.includes("{")).length;
-  const closeBraces = jacLines.filter(line => line.includes("}")).length;
-  for (let i = 0; i < openBraces - closeBraces; i++) {
-    jacLines.push("}");
-  }
-  
-  return jacLines.join("\n");
+    };
+    
+    // Start the conversion
+    globalPythonThread.startConversion('py2jac', pythonCode);
+    
+    // Set a timeout to avoid hanging
+    setTimeout(() => {
+      reject(new Error("Conversion timeout - operation took too long"));
+    }, 30000); // 30 second timeout
+  });
 }

@@ -34,6 +34,7 @@ export class PythonThread {
   callbackStdout: (output: string) => void;
   callbackStderr: (output: string) => void;
   callbackJacGraph: (graph: string) => void;
+  callbackConversionResult: (result: string) => void;
 
   constructor(loadedCallback: () => void) {
     const sharedBuffer = new SharedArrayBuffer(4 * SHARED_INT_SIZE); // 4 bytes for one Int32
@@ -82,6 +83,15 @@ export class PythonThread {
       code: code,
     });
     this.isRunning = true;
+  }
+
+  startConversion(conversionType: 'jac2py' | 'py2jac', inputCode: string) {
+    this.logMessage(`Starting ${conversionType} conversion`);
+    this.pythonThread.postMessage({
+      type: 'convertCode',
+      conversionType: conversionType,
+      inputCode: inputCode,
+    });
   }
 
   continueExecution() {
@@ -168,6 +178,13 @@ export class PythonThread {
         // this.logMessage('JacGraph received'); 
         if (this.callbackJacGraph !== undefined) {
           this.callbackJacGraph(data.graph);
+        }
+        break;
+
+      case 'conversionResult':
+        this.logMessage('Conversion result received');
+        if (this.callbackConversionResult !== undefined) {
+          this.callbackConversionResult(data.result);
         }
         break;
 

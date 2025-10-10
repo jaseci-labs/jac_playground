@@ -15,7 +15,7 @@ import { DebugPanel } from "@/components/DebugPanel";
 import { DebugControls, DebugAction } from "@/components/DebugControls";
 import { HelpDialog } from "@/components/HelpDialog";
 import { useToast } from "@/hooks/use-toast";
-import { convertJacToPython, convertPythonToJac } from "@/lib/codeService";
+import { convertJacToPython, convertPythonToJac, setPythonThread as setCodeServicePythonThread } from "@/lib/codeService";
 import jacLogo from "/jaseci.png";
 
 import {
@@ -43,10 +43,12 @@ const Index = () => {
 
   useEffect(() => {
     if (!pythonThread) {
-      setPythonThread(new PythonThread(() => {
+      const newPythonThread = new PythonThread(() => {
         console.log("[JsThread] Loaded callback invoked.");
         setloaded(true);
-      }));
+      });
+      setCodeServicePythonThread(newPythonThread);
+      setPythonThread(newPythonThread);
     }
   }, [loaded, pythonThread]);
 

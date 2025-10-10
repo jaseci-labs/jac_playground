@@ -52,6 +52,12 @@ onmessage = async (event) => {
       self.postMessage({ type: 'execEnd' });
       break;
 
+    case 'convertCode':
+      logMessage(`Starting ${data.conversionType} conversion...`);
+      await convertCode(data.conversionType, data.inputCode);
+      logMessage(`Conversion finished`);
+      break;
+
     default:
       console.error("Unknown message type:", data.type);
   }
@@ -264,4 +270,29 @@ with entry {
   }
   logMessage("Execution finished.");
   dbg = null;
+}
+
+async function convertCode(conversionType, inputCode) {
+  pyodide.globals.set('CONVERSION_TYPE', conversionType);
+  pyodide.globals.set('INPUT_CODE', inputCode);
+  pyodide.globals.set('CB_STDOUT', callbackStdout);
+  pyodide.globals.set('CB_STDERR', callbackStderr);
+  pyodide.globals.set('CB_RESULT', callbackConversionResult);
+
+  // Run the conversion script
+  logMessage("Conversion started.");
+  try {
+    await pyodide.runPythonAsync(
+      await readFileAsString("/python/main_conversion.py")
+    );
+  } catch (error) {
+    logMessage(`Conversion error: ${error.message}`);
+    // Send error result back to main thread
+    callbackConversionResult(`// Error during conversion:\n// ${error.message}`);
+  }
+  logMessage("Conversion finished.");
+}
+
+function callbackConversionResult(result) {
+  self.postMessage({ type: 'conversionResult', result: result });
 }
