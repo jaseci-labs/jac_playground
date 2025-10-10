@@ -94,6 +94,15 @@ export class PythonThread {
     });
   }
 
+  startPythonExecution(code: string) {
+    this.logMessage("Starting Python execution");
+    this.pythonThread.postMessage({
+      type: 'executePython',
+      code: code,
+    });
+    this.isRunning = true;
+  }
+
   continueExecution() {
     // this.logMessage("Continuing execution"); 
     this.sharedInts[0] = 1;

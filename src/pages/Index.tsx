@@ -37,7 +37,7 @@ const Index = () => {
   const [loaded, setloaded] = useState(false);
   const [graph, setGraph] = useState<JSON>(null);
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
-  
+
   const isMobile = useMobileDetect();
   const { toast } = useToast();
   const codeEditorRef = useRef<CodeEditorHandle>(null);
@@ -101,18 +101,50 @@ const Index = () => {
   };
 
   const handleRunPython = (pythonCode: string) => {
-    // For now, show a message that Python execution is not yet implemented
-    toast({
-      title: "Python Execution",
-      description: "Python code execution will be implemented in a future update.",
-      variant: "default",
-    });
-    
-    // TODO: Implement Python code execution
-    // This would require either:
-    // 1. A separate Python execution environment in the browser
-    // 2. Converting Python to Jac and running it
-    // 3. A backend service for Python execution
+    if (!loaded || !pythonThread?.loaded) {
+      toast({
+        title: "Environment Not Ready",
+        description: "Python environment is still loading. Please wait.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Use Python execution logic
+    setOutput("");
+    setOutIsError(false);
+
+    // Set up callbacks
+    pythonThread.callbackBreakHit = (line: number) => {
+      // No execution line highlighting needed for conversion panel Python code
+    };
+    pythonThread.callbackStdout = (outputText: string) => {
+      setOutput(prev => prev + outputText);
+      setOutIsError(false);
+    };
+    pythonThread.callbackStderr = (errorText: string) => {
+      setOutput(prev => prev + errorText);
+      setOutIsError(true);
+    };
+    pythonThread.callbackExecEnd = () => {
+      setIsRunning(false);
+    };
+    pythonThread.callbackJacGraph = (graph_str: string) => {
+      // Python code doesn't generate Jac graphs, but we keep this for consistency
+    };
+
+    try {
+      setIsRunning(true);
+      pythonThread.startPythonExecution(pythonCode);
+      toast({
+        title: "Running Python Code",
+        description: "Executing Python code from conversion panel.",
+      });
+    } catch (error) {
+      console.error("Error running Python code:", error);
+      setOutput(`Error: ${error}`);
+      setIsRunning(false);
+    }
   };
 
   const handleSelectExample = (exampleCode: string) => {

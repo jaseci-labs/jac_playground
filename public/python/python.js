@@ -58,6 +58,13 @@ onmessage = async (event) => {
       logMessage(`Conversion finished`);
       break;
 
+    case 'executePython':
+      logMessage("Starting Python execution...");
+      await executePython(data.code);
+      logMessage(`Python execution finished`);
+      self.postMessage({ type: 'execEnd' });
+      break;
+
     default:
       console.error("Unknown message type:", data.type);
   }
@@ -295,4 +302,23 @@ async function convertCode(conversionType, inputCode) {
 
 function callbackConversionResult(result) {
   self.postMessage({ type: 'conversionResult', result: result });
+}
+
+async function executePython(pythonCode) {
+  pyodide.globals.set('PYTHON_CODE', pythonCode);
+  pyodide.globals.set('CB_STDOUT', callbackStdout);
+  pyodide.globals.set('CB_STDERR', callbackStderr);
+
+  // Run the Python execution script
+  logMessage("Python execution started.");
+  try {
+    await pyodide.runPythonAsync(
+      await readFileAsString("/python/main_python_execution.py")
+    );
+  } catch (error) {
+    logMessage(`Python execution error: ${error.message}`);
+    // Send error to stderr callback
+    callbackStderr(`Python execution error: ${error.message}`);
+  }
+  logMessage("Python execution finished.");
 }
