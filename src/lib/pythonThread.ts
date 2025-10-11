@@ -85,7 +85,7 @@ export class PythonThread {
     this.isRunning = true;
   }
 
-  startConversion(conversionType: 'jac2py' | 'py2jac', inputCode: string) {
+  startConversion(conversionType: 'jac2lib' | 'py2jac', inputCode: string) {
     this.logMessage(`Starting ${conversionType} conversion`);
     this.pythonThread.postMessage({
       type: 'convertCode',

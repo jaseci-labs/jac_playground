@@ -23,7 +23,7 @@ export async function convertJacToPython(jacCode: string): Promise<string> {
       }
     };
     
-    globalPythonThread.startConversion('jac2py', jacCode);
+    globalPythonThread.startConversion('jac2lib', jacCode);
     
     setTimeout(() => {
       reject(new Error("Conversion timeout - operation took too long"));

@@ -29,7 +29,7 @@ const Index = () => {
 
   const [currentMode, setCurrentMode] = useState<Mode>("run");
   const [code, setCode] = useState(defaultCode);
-  const [conversionCode, setConversionCode] = useState(""); // For jac2py and py2jac modes
+  const [conversionCode, setConversionCode] = useState(""); // For jac2lib and py2jac modes
   const [output, setOutput] = useState("");
   const [outIsError, setOutIsError] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -217,7 +217,7 @@ const Index = () => {
     setOutput("");
     setOutIsError(false);
 
-    if (currentMode === "jac2py") {
+    if (currentMode === "jac2lib") {
       return await convertJacToPython(inputCode);
     } else if (currentMode === "py2jac") {
       return await convertPythonToJac(inputCode);
@@ -411,7 +411,7 @@ const Index = () => {
                   </div>
                 )}
 
-                {(currentMode === "jac2py" || currentMode === "py2jac") && (
+                {(currentMode === "jac2lib" || currentMode === "py2jac") && (
                   <ConversionPanel
                     mode={currentMode}
                     inputCode={conversionCode}
@@ -424,7 +424,7 @@ const Index = () => {
                 )}
               </div>
 
-              {(currentMode === "run" || currentMode === "debug" || currentMode === "jac2py" || currentMode === "py2jac") && (
+              {(currentMode === "run" || currentMode === "debug" || currentMode === "jac2lib" || currentMode === "py2jac") && (
                 <ResizablePanel
                   direction="horizontal"
                   defaultSize={30}

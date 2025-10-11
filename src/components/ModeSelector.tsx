@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type Mode = "run" | "debug" | "jac2py" | "py2jac";
+export type Mode = "run" | "debug" | "jac2lib" | "py2jac";
 
 interface ModeSelectorProps {
   currentMode: Mode;
@@ -13,7 +13,7 @@ export function ModeSelector({ currentMode, onModeChange, className }: ModeSelec
   const modes: { key: Mode; label: string; description: string }[] = [
     { key: "run", label: "Run", description: "Execute Jac code" },
     { key: "debug", label: "Debug", description: "Debug with graph visualization" },
-    { key: "jac2py", label: "Jac2Py", description: "Convert Jac to Python" },
+    { key: "jac2lib", label: "Jac2Lib", description: "Convert Jac to Python" },
     { key: "py2jac", label: "Py2Jac", description: "Convert Python to Jac" },
   ];
 
