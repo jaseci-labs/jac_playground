@@ -15,7 +15,18 @@ export async function convertJacToPython(jacCode: string): Promise<string> {
   }
   
   return new Promise((resolve, reject) => {
+    const originalStdout = globalPythonThread.callbackStdout;
+    const originalStderr = globalPythonThread.callbackStderr;
+    
+    // Temporarily disable output callbacks to prevent conversion output from appearing in output panel
+    globalPythonThread.callbackStdout = null;
+    globalPythonThread.callbackStderr = null;
+    
     globalPythonThread.callbackConversionResult = (result: string) => {
+      // Restore original callbacks
+      globalPythonThread.callbackStdout = originalStdout;
+      globalPythonThread.callbackStderr = originalStderr;
+      
       if (result.startsWith("// Error")) {
         reject(new Error(result.replace("// Error during conversion:\n// ", "")));
       } else {
@@ -26,6 +37,9 @@ export async function convertJacToPython(jacCode: string): Promise<string> {
     globalPythonThread.startConversion('jac2lib', jacCode);
     
     setTimeout(() => {
+      // Restore original callbacks on timeout too
+      globalPythonThread.callbackStdout = originalStdout;
+      globalPythonThread.callbackStderr = originalStderr;
       reject(new Error("Conversion timeout - operation took too long"));
     }, 30000);
   });
@@ -42,7 +56,19 @@ export async function convertPythonToJac(pythonCode: string): Promise<string> {
   }
   
   return new Promise((resolve, reject) => {
+    // Store original callbacks
+    const originalStdout = globalPythonThread.callbackStdout;
+    const originalStderr = globalPythonThread.callbackStderr;
+    
+    // Temporarily disable output callbacks to prevent conversion output from appearing in output panel
+    globalPythonThread.callbackStdout = null;
+    globalPythonThread.callbackStderr = null;
+    
     globalPythonThread.callbackConversionResult = (result: string) => {
+      // Restore original callbacks
+      globalPythonThread.callbackStdout = originalStdout;
+      globalPythonThread.callbackStderr = originalStderr;
+      
       if (result.startsWith("// Error")) {
         reject(new Error(result.replace("// Error during conversion:\n// ", "")));
       } else {
@@ -53,6 +79,9 @@ export async function convertPythonToJac(pythonCode: string): Promise<string> {
     globalPythonThread.startConversion('py2jac', pythonCode);
     
     setTimeout(() => {
+      // Restore original callbacks on timeout too
+      globalPythonThread.callbackStdout = originalStdout;
+      globalPythonThread.callbackStderr = originalStderr;
       reject(new Error("Conversion timeout - operation took too long"));
     }, 30000);
   });

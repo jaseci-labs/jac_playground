@@ -134,10 +134,6 @@ const Index = () => {
     try {
       setIsRunning(true);
       pythonThread.startExecution(jacCode);
-      toast({
-        title: "Running Jac Code",
-        description: "Executing Jac code from conversion panel.",
-      });
     } catch (error) {
       console.error("Error running Jac code:", error);
       setOutput(`Error: ${error}`);
@@ -214,9 +210,6 @@ const Index = () => {
   }, []);
 
   const handleConversion = useCallback(async (inputCode: string): Promise<string> => {
-    setOutput("");
-    setOutIsError(false);
-
     if (currentMode === "jac2lib") {
       return await convertJacToPython(inputCode);
     } else if (currentMode === "py2jac") {

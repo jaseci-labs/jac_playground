@@ -166,13 +166,13 @@ export class PythonThread {
         break;
 
       case 'stdout':
-        if (this.callbackStdout !== undefined) {
+        if (this.callbackStdout !== undefined && this.callbackStdout !== null) {
           this.callbackStdout(data.output);
         }
         break;
 
       case 'stderr':
-        if (this.callbackStderr !== undefined) {
+        if (this.callbackStderr !== undefined && this.callbackStderr !== null) {
           this.callbackStderr(data.output);
         }
         break;
