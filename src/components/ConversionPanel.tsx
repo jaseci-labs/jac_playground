@@ -6,7 +6,7 @@ import { CodeEditor } from "./CodeEditor";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface ConversionPanelProps {
-  mode: "jac2lib" | "py2jac";
+  mode: "jac2py" | "py2jac";
   inputCode: string;
   onInputChange: (code: string) => void;
   onConvert: (inputCode: string) => Promise<string>;
@@ -77,7 +77,7 @@ export function ConversionPanel({
   const handleRunInput = () => {
     if (!inputCode.trim()) return;
     
-    if (mode === "jac2lib") {
+    if (mode === "jac2py") {
       onRunJac?.(inputCode);
     } else {
       onRunPython?.(inputCode);
@@ -87,15 +87,15 @@ export function ConversionPanel({
   const handleRunOutput = () => {
     if (!outputCode.trim()) return;
     
-    if (mode === "jac2lib") {
+    if (mode === "jac2py") {
       onRunPython?.(outputCode);
     } else {
       onRunJac?.(outputCode);
     }
   };
 
-  const inputLabel = mode === "jac2lib" ? "Jac Code" : "Python Code";
-  const outputLabel = mode === "jac2lib" ? "Python Code" : "Jac Code";
+  const inputLabel = mode === "jac2py" ? "Jac Code" : "Python Code";
+  const outputLabel = mode === "jac2py" ? "Python Code" : "Jac Code";
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -161,7 +161,7 @@ export function ConversionPanel({
                 <CodeEditor
                   value={inputCode}
                   onChange={onInputChange}
-                  language={mode === "jac2lib" ? "jac" : "python"}
+                  language={mode === "jac2py" ? "jac" : "python"}
                   onRunCode={handleRunInput}
                   readOnly={false}
                   className="h-full"
@@ -211,7 +211,7 @@ export function ConversionPanel({
                   <CodeEditor
                     value={outputCode}
                     onChange={() => {}}
-                    language={mode === "jac2lib" ? "python" : "jac"}
+                    language={mode === "jac2py" ? "python" : "jac"}
                     onRunCode={handleRunOutput}
                     readOnly={true}
                     className="h-full"

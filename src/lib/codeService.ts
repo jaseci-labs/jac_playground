@@ -1,5 +1,5 @@
 let globalPythonThread: any = null;
-type ConversionType = 'jac2lib' | 'py2jac';
+type ConversionType = 'jac2py' | 'py2jac';
 const CONVERSION_TIMEOUT = 30000;
 
 // Sets the global Python thread instance
@@ -79,7 +79,7 @@ async function performConversion(
 
 // Converts Jac code to Python using jaclang
 export async function convertJacToPython(jacCode: string): Promise<string> {
-  return performConversion(jacCode, 'jac2lib', 'Jac');
+  return performConversion(jacCode, 'jac2py', 'Jac');
 }
 
 // Converts Python code to Jac using jaclang
