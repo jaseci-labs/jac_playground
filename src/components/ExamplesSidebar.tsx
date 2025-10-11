@@ -222,7 +222,7 @@ export function ExamplesSidebar({
           </ScrollArea>
           <div className="p-4 flex justify-between items-center border-t">
             <span className="text-xs text-muted-foreground">
-              v1.0.0
+              v1.1.0
             </span>
             <ThemeToggle />
           </div>

@@ -1,52 +1,88 @@
+let globalPythonThread: any = null;
+type ConversionType = 'jac2lib' | 'py2jac';
+const CONVERSION_TIMEOUT = 30000;
 
-// This is a mock service as we can't actually run Jaclang in the browser
-// In a real implementation, this would connect to a backend service
-export async function executeCode(code: string): Promise<string> {
-  // Simulate a network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  
-  // Parse the code to generate a simulated output
-  const outputLines: string[] = [];
-  
-  // Simple parsing to simulate execution
-  const lines = code.split("\n");
-  let inFunction = false;
-  let indentLevel = 0;
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    
-    // Handle print statements
-    if (trimmedLine.startsWith("print(") && trimmedLine.endsWith(");") || 
-        trimmedLine.startsWith("print(") && trimmedLine.endsWith(")")) {
-      // Extract content inside print()
-      const match = trimmedLine.match(/print\((.*)\)/);
-      if (match && match[1]) {
-        let content = match[1];
-        
-        // Handle string literals
-        if (content.startsWith('"') && content.endsWith('"')) {
-          content = content.slice(1, -1);
-        } else if (content.includes(",")) {
-          // Handle multiple arguments
-          content = content.split(",").map(arg => arg.trim()).join(" ");
-        }
-        
-        outputLines.push(content);
-      }
-    }
-    
-    // Simulate function execution for fibonacci
-    if (trimmedLine === "for i in range(10):") {
-      // Special case for the default example
-      if (code.includes("fibonacci(i)")) {
-        outputLines.push("Fibonacci Sequence:");
-        // Calculate actual fibonacci numbers
-        const fibs = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34];
-        fibs.forEach(num => outputLines.push(num.toString()));
-      }
-    }
+// Sets the global Python thread instance
+export function setPythonThread(pythonThread: any) {
+  globalPythonThread = pythonThread;
+}
+
+// Validates prerequisites before performing conversion
+function validateConversionPrerequisites(code: string, codeType: string): void {
+  if (!code.trim()) {
+    throw new Error(`No ${codeType} code provided`);
   }
   
-  return outputLines.join("\n");
+  if (!globalPythonThread || !globalPythonThread.loaded) {
+    throw new Error("Python environment not ready");
+  }
+}
+
+// Temporarily disables output callbacks to prevent conversion output from appearing in main output panel
+function disableOutputCallbacks(): { stdout: any; stderr: any } {
+  const originalCallbacks = {
+    stdout: globalPythonThread.callbackStdout,
+    stderr: globalPythonThread.callbackStderr
+  };
+  
+  globalPythonThread.callbackStdout = null;
+  globalPythonThread.callbackStderr = null;
+  
+  return originalCallbacks;
+}
+
+
+// Restores the original output callbacks
+function restoreOutputCallbacks(originalCallbacks: { stdout: any; stderr: any }): void {
+  globalPythonThread.callbackStdout = originalCallbacks.stdout;
+  globalPythonThread.callbackStderr = originalCallbacks.stderr;
+}
+
+// Processes conversion result and handles errors
+function processConversionResult(result: string): string {
+  if (result.startsWith("// Error")) {
+    throw new Error(result.replace("// Error during conversion:\n// ", ""));
+  }
+  return result;
+}
+
+// Generic conversion function that handles the common conversion logic
+async function performConversion(
+  code: string, 
+  conversionType: ConversionType,
+  codeTypeName: string
+): Promise<string> {
+  validateConversionPrerequisites(code, codeTypeName);
+  
+  return new Promise((resolve, reject) => {
+    const originalCallbacks = disableOutputCallbacks();
+    
+    globalPythonThread.callbackConversionResult = (result: string) => {
+      restoreOutputCallbacks(originalCallbacks);
+      
+      try {
+        const processedResult = processConversionResult(result);
+        resolve(processedResult);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    globalPythonThread.startConversion(conversionType, code);
+    
+    setTimeout(() => {
+      restoreOutputCallbacks(originalCallbacks);
+      reject(new Error("Conversion timeout - operation took too long"));
+    }, CONVERSION_TIMEOUT);
+  });
+}
+
+// Converts Jac code to Python using jaclang
+export async function convertJacToPython(jacCode: string): Promise<string> {
+  return performConversion(jacCode, 'jac2lib', 'Jac');
+}
+
+// Converts Python code to Jac using jaclang
+export async function convertPythonToJac(pythonCode: string): Promise<string> {
+  return performConversion(pythonCode, 'py2jac', 'Python');
 }

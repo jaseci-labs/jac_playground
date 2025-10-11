@@ -34,6 +34,7 @@ export class PythonThread {
   callbackStdout: (output: string) => void;
   callbackStderr: (output: string) => void;
   callbackJacGraph: (graph: string) => void;
+  callbackConversionResult: (result: string) => void;
 
   constructor(loadedCallback: () => void) {
     const sharedBuffer = new SharedArrayBuffer(4 * SHARED_INT_SIZE); // 4 bytes for one Int32
@@ -79,6 +80,24 @@ export class PythonThread {
     this.logMessage("Starting execution");
     this.pythonThread.postMessage({
       type: 'startExecution',
+      code: code,
+    });
+    this.isRunning = true;
+  }
+
+  startConversion(conversionType: 'jac2lib' | 'py2jac', inputCode: string) {
+    this.logMessage(`Starting ${conversionType} conversion`);
+    this.pythonThread.postMessage({
+      type: 'convertCode',
+      conversionType: conversionType,
+      inputCode: inputCode,
+    });
+  }
+
+  startPythonExecution(code: string) {
+    this.logMessage("Starting Python execution");
+    this.pythonThread.postMessage({
+      type: 'executePython',
       code: code,
     });
     this.isRunning = true;
@@ -147,13 +166,13 @@ export class PythonThread {
         break;
 
       case 'stdout':
-        if (this.callbackStdout !== undefined) {
+        if (this.callbackStdout !== undefined && this.callbackStdout !== null) {
           this.callbackStdout(data.output);
         }
         break;
 
       case 'stderr':
-        if (this.callbackStderr !== undefined) {
+        if (this.callbackStderr !== undefined && this.callbackStderr !== null) {
           this.callbackStderr(data.output);
         }
         break;
@@ -168,6 +187,13 @@ export class PythonThread {
         // this.logMessage('JacGraph received'); 
         if (this.callbackJacGraph !== undefined) {
           this.callbackJacGraph(data.graph);
+        }
+        break;
+
+      case 'conversionResult':
+        this.logMessage('Conversion result received');
+        if (this.callbackConversionResult !== undefined) {
+          this.callbackConversionResult(data.result);
         }
         break;
 
