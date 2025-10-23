@@ -27,7 +27,7 @@ import JacLoadingOverlay from "@/components/JacLoadingOverlay";
 
 const Index = () => {
 
-  const [currentMode, setCurrentMode] = useState<Mode>("run");
+  const [currentMode, setCurrentMode] = useState<Mode>("debug");
   const [code, setCode] = useState(defaultCode);
   const [conversionCode, setConversionCode] = useState(""); // For jac2py and py2jac modes
   const [output, setOutput] = useState("");
@@ -177,7 +177,7 @@ const Index = () => {
   };
 
   const handleSelectExample = (exampleCode: string) => {
-    setCurrentMode("run");
+    setCurrentMode("debug");
     setCode(exampleCode);
     if (isMobile) {
       setShowMobileSidebar(false);
@@ -220,10 +220,6 @@ const Index = () => {
 
   const handleDebugAction = useCallback(async (action: DebugAction) => {
     switch (action) {
-
-      case "toggle":
-        setCurrentMode(prev => prev === "debug" ? "run" : "debug");
-        break;
 
       case "continue":
         pythonThread.continueExecution();
@@ -319,14 +315,14 @@ const Index = () => {
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="h-12 border-b bg-card flex items-center justify-between px-4">
               <div className="flex items-center space-x-2">
-                {(currentMode === "run" || currentMode === "debug") && (
+                {currentMode === "debug" && (
                   <Button
                     onClick={runJacCode}
                     disabled={isRunning || !loaded}
                     className="space-x-1 bg-primary hover:bg-primary/90"
                   >
                     <Play className="h-4 w-4" />
-                    <span>{currentMode === "debug" ? "Debug" : "Run"}</span>
+                    <span>Run</span>
                   </Button>
                 )}
                 <Button
@@ -364,43 +360,30 @@ const Index = () => {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-hidden">
                 {/* Render different layouts based on current mode */}
-                {(currentMode === "run" || currentMode === "debug") && (
+                {currentMode === "debug" && (
                   <div className="h-full">
-                    {currentMode === "debug" ? (
-                      <ResizablePanelGroup direction="horizontal" className="h-full">
-                        <UIResizablePanel defaultSize={50} minSize={30} maxSize={70}>
-                          <CodeEditor
-                            ref={codeEditorRef}
-                            value={code}
-                            onChange={setCode}
-                            className="h-full"
-                            onBreakpointsChange={handleBreakpointsChange}
-                            onRunCode={runJacCode}
-                            onToggleDebug={() => handleDebugAction("toggle")}
-                          />
-                        </UIResizablePanel>
-                        
-                        <ResizableHandle withHandle />
-                        
-                        <UIResizablePanel defaultSize={50} minSize={30} maxSize={70}>
-                          <DebugPanel
-                            graph={graph}
-                            debugStatus={isRunning}
-                            className="h-full"
-                          />
-                        </UIResizablePanel>
-                      </ResizablePanelGroup>
-                    ) : (
-                      <CodeEditor
-                        ref={codeEditorRef}
-                        value={code}
-                        onChange={setCode}
-                        className="h-full"
-                        onBreakpointsChange={handleBreakpointsChange}
-                        onRunCode={runJacCode}
-                        onToggleDebug={() => handleDebugAction("toggle")}
-                      />
-                    )}
+                    <ResizablePanelGroup direction="horizontal" className="h-full">
+                      <UIResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+                        <CodeEditor
+                          ref={codeEditorRef}
+                          value={code}
+                          onChange={setCode}
+                          className="h-full"
+                          onBreakpointsChange={handleBreakpointsChange}
+                          onRunCode={runJacCode}
+                        />
+                      </UIResizablePanel>
+                      
+                      <ResizableHandle withHandle />
+                      
+                      <UIResizablePanel defaultSize={50} minSize={30} maxSize={70}>
+                        <DebugPanel
+                          graph={graph}
+                          debugStatus={isRunning}
+                          className="h-full"
+                        />
+                      </UIResizablePanel>
+                    </ResizablePanelGroup>
                   </div>
                 )}
 
@@ -417,7 +400,7 @@ const Index = () => {
                 )}
               </div>
 
-              {(currentMode === "run" || currentMode === "debug" || currentMode === "jac2py" || currentMode === "py2jac") && (
+              {(currentMode === "debug" || currentMode === "jac2py" || currentMode === "py2jac") && (
                 <ResizablePanel
                   direction="horizontal"
                   defaultSize={30}
