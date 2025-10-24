@@ -193,14 +193,29 @@ const Index = () => {
   };
 
   const handleBreakpointsChange = (newBreakpoints: number[]) => {
+    console.log("Breakpoints changed:", newBreakpoints);
     setBreakpoints(newBreakpoints);
+    
+    if (pythonThread && pythonThread.loaded && currentMode === "debug") {
+      setTimeout(() => {
+        pythonThread.setBreakpoints(newBreakpoints);
+        console.log("Breakpoints synced to debugger during debug session");
+      }, 100);
+    }
   };
 
   useEffect(() => {
     if (pythonThread != null && pythonThread.loaded) {
+      console.log("Syncing breakpoints to Python thread:", breakpoints);
       pythonThread.setBreakpoints(breakpoints);
+      
+      if (codeEditorRef.current && currentMode === "debug") {
+        setTimeout(() => {
+          codeEditorRef.current?.setBreakpoints(breakpoints);
+        }, 50);
+      }
     }
-  }, [breakpoints, pythonThread]);
+  }, [breakpoints, pythonThread, currentMode]);
 
 
   const handleModeChange = useCallback((mode: Mode) => {
@@ -208,6 +223,17 @@ const Index = () => {
     setConversionCode("");
 
   }, []);
+
+  // Handle mode changes and sync breakpoints when entering debug mode
+  useEffect(() => {
+    if (currentMode === "debug" && pythonThread && pythonThread.loaded && breakpoints.length > 0) {
+      console.log("Entering debug mode, syncing existing breakpoints:", breakpoints);
+      setTimeout(() => {
+        pythonThread.setBreakpoints(breakpoints);
+        codeEditorRef.current?.setBreakpoints(breakpoints);
+      }, 100);
+    }
+  }, [currentMode, pythonThread, breakpoints]);
 
   const handleConversion = useCallback(async (inputCode: string): Promise<string> => {
     if (currentMode === "jac2py") {

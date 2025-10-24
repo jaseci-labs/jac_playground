@@ -19,6 +19,9 @@ interface CodeEditorProps {
 export interface CodeEditorHandle {
   highlightExecutionLine: (line: number) => void;
   clearExecutionLine: () => void;
+  setBreakpoints: (breakpoints: number[]) => void;
+  getBreakpoints: () => number[];
+  clearAllBreakpoints: () => void;
 }
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
@@ -105,6 +108,69 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
         }
       });
 
+      // Adjusting the breakpoints on content change
+      if (language === "jac") {
+        editor.onDidChangeModelContent((e) => {
+          if (breakpointsRef.current.size > 0) {
+            const breakpoints = breakpointsRef.current;
+            const newBreakpoints = new Set<number>();
+            
+            // Adjust breakpoints based on content changes
+            for (const lineNum of Array.from(breakpoints)) {
+              let adjustedLine = lineNum;
+              
+              for (const change of e.changes) {
+                const startLine = change.range.startLineNumber;
+                const startColumn = change.range.startColumn;
+                const endLine = change.range.endLineNumber;
+                const linesAdded = change.text.split('\n').length - 1;
+                const linesRemoved = endLine - startLine;
+                
+                if (lineNum === startLine) {
+                  // If insertion happens at the beginning of line, move breakpoint down
+                  if (startColumn === 1 && linesAdded > 0) {
+                    adjustedLine = lineNum + linesAdded;
+                  }
+                  // If the entire line is deleted, remove the breakpoint
+                  else if (linesRemoved > 0 && lineNum <= endLine) {
+                    adjustedLine = -1;
+                  }
+                }
+                // If breakpoint is after the change
+                else if (lineNum > startLine) {
+                  adjustedLine = adjustedLine - linesRemoved + linesAdded;
+                }
+              }
+              
+              if (adjustedLine > 0) {
+                newBreakpoints.add(adjustedLine);
+              }
+            }
+
+            // Only update if breakpoints actually changed
+            const breakpointsArray = Array.from(breakpoints);
+            const newBreakpointsArray = Array.from(newBreakpoints);
+            
+            if (newBreakpointsArray.length !== breakpointsArray.length || 
+                !newBreakpointsArray.every(line => breakpoints.has(line))) {
+              breakpointsRef.current = newBreakpoints;
+              
+              const newDecorations = newBreakpointsArray.map((lineNum) => ({
+                range: new monaco.Range(lineNum, 1, lineNum, 1),
+                options: {
+                  isWholeLine: false,
+                  glyphMarginClassName: "myBreakPoint",
+                  glyphMarginHoverMessage: { value: "Breakpoint" },
+                },
+              }));
+
+              decorationsCollectionRef.current?.set(newDecorations);
+              onBreakpointsChange?.(newBreakpointsArray);
+            }
+          }
+        });
+      }
+
       // Add keyboard shortcuts
       // Only add Jac-specific keyboard shortcuts and context menu for Jac language
       if (language === "jac") {
@@ -141,10 +207,48 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       }
     }, [language, registerJacLanguage, onRunCode, onToggleDebug]);
 
+    const setBreakpoints = useCallback((breakpoints: number[]) => {
+      const newBreakpointsSet = new Set(breakpoints);
+      breakpointsRef.current = newBreakpointsSet;
+      
+      if (monacoRef.current) {
+        const newDecorations = breakpoints.map((lineNum) => ({
+          range: new monacoRef.current.Range(lineNum, 1, lineNum, 1),
+          options: {
+            isWholeLine: false,
+            glyphMarginClassName: "myBreakPoint",
+            glyphMarginHoverMessage: { value: "Breakpoint" },
+          },
+        }));
+
+        if (decorationsCollectionRef.current) {
+          decorationsCollectionRef.current.set(newDecorations);
+        } else if (editorRef.current) {
+          decorationsCollectionRef.current = editorRef.current.createDecorationsCollection(newDecorations);
+        }
+      }
+    }, []);
+
+    const getBreakpoints = useCallback(() => {
+      return Array.from(breakpointsRef.current);
+    }, []);
+
+    const clearAllBreakpoints = useCallback(() => {
+      breakpointsRef.current.clear();
+      if (decorationsCollectionRef.current) {
+        decorationsCollectionRef.current.clear();
+      }
+      if (onBreakpointsChange) {
+        onBreakpointsChange([]);
+      }
+    }, [onBreakpointsChange]);
 
     useImperativeHandle(ref, () => ({
       highlightExecutionLine: (line) => highlightExecutionLine(line),
       clearExecutionLine: () => clearExecutionLine(),
+      setBreakpoints: (breakpoints) => setBreakpoints(breakpoints),
+      getBreakpoints: () => getBreakpoints(),
+      clearAllBreakpoints: () => clearAllBreakpoints(),
     }));
 
 
