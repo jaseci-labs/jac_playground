@@ -102,7 +102,7 @@ export function ExamplesSidebar({
                 )}
                 onClick={async () => {
                   // Fetch code and pass to onSelectExample
-                  const codeRes = await fetch(`/examples/${node.filename}`);
+                  const codeRes = await fetch(`/assets/examples/${node.filename}`);
                   if (!codeRes.ok) {
                     console.error(`Failed to load ${node.filename}: ${codeRes.statusText}`);
                     return;
