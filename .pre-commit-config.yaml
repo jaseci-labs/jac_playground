@@ -1,0 +1,13 @@
+# Pre-commit configuration with minimal checks
+repos:
+  - repo: local
+    hooks:
+      - id: no-op
+        name: No operation hook
+        entry: /bin/true
+        language: system
+        files: .*
+        pass_filenames: false
+
+# Alternative: Empty configuration (uncomment if you want truly no checks)
+# repos: []
