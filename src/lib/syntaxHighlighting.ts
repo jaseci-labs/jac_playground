@@ -27,7 +27,7 @@ export async function loadSyntax(monaco: any, editor: any) {
   }
 
   if (!grammarLoaded) {
-    const response = await fetch("https://raw.githubusercontent.com/jaseci-labs/jaseci/main/jac/support/vscode_ext/jac/syntaxes/jac.tmLanguage.json");
+    const response = await fetch("https://raw.githubusercontent.com/jaseci-labs/jac-vscode/main/syntaxes/jac.tmLanguage.json");
     const grammerConfigRes = await fetch(LANGUAGE_CONFIG_PATH);
     const jacGrammar = await response.json();
     cachedGrammarConfig = await grammerConfigRes.json();
