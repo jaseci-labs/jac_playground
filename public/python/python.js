@@ -9,10 +9,7 @@ var dbg = null;  // The debugger instance.
 var sharedInts = null;
 var continueExecution = false;
 
-// Doc Use
-// const PLAYGROUND_PATH = "/playground";
-
-// Development Use
+// Do not Remove or modify this path variable, it should be exactly as below for the deployment.
 const PLAYGROUND_PATH = "";
 
 const LOG_PATH = "/tmp/logs.log";
@@ -204,7 +201,7 @@ function callbackBreak(dbg, line) {
                 logMessage("Forced cleanup after timeout.");
               }
             }, 1000);
-            
+
             dbg.do_terminate();
             logMessage("Execution stopped.");
           } catch (error) {
