@@ -98,6 +98,13 @@ async function readFileAsBytes(fileName) {
 // ----------------------------------------------------------------------------
 async function loadPyodideAndJacLang() {
   try {
+    // Install required packages via micropip
+    await pyodide.loadPackage("micropip");
+    await pyodide.runPythonAsync(`
+import micropip
+await micropip.install('pluggy')
+    `);
+    
     await loadPythonResources(pyodide);
     const success = await checkJaclangLoaded(pyodide);
 
